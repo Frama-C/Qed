@@ -1,0 +1,9 @@
+type 'a array
+
+def get: 'a array -> int -> 'a
+
+def set: 'a array -> int -> 'a -> 'a array
+
+rule get_set_eq: get (set 'arr 'i 'v) 'j = 'v when 'i = 'j
+
+rule get_set_neq: get (set 'arr 'i 'v) 'j = get 'arr 'i when 'i != 'j

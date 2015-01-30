@@ -1,0 +1,19 @@
+let f : int -> int -> int.
+
+print let t = f 1 1 in 
+      forall x. let x = f x x in let t = f t t in let x = f x x in 
+      exists y. let y = f y y in let t = f t t in let y = f y y in
+      (f t x)=(f t y).
+
+let h : int -> int.
+let g : int -> int -> int -> int.
+
+(* t1 is marked first, t2 second *)
+print let t1 = h 1 in
+      let t2 = h t1 in
+      g t1 t2 t2.
+
+(* t2 is marked first, t1 second *)
+print let t1 = h 1 in
+      let t2 = h t1 in
+      g t2 t2 t1.

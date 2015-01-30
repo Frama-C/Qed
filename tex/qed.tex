@@ -1,0 +1,50 @@
+\documentclass[twocolumn]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage[colorlinks]{hyperref}
+\usepackage{xspace}
+\usepackage{multicol}
+\usepackage{abstract}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{\baselineskip}
+\input{macros}
+
+\begin{document}
+\title{\Qed: proving in logic modulo}
+\author{Loïc Correnson}
+\twocolumn[
+\maketitle
+
+\begin{abstract}
+  We propose a framework for manipulating in a efficient way terms and
+  formul{\ae} in classical logic modulo equality. \Qed was firstly
+  designed for the generation of proof obligations of a
+  weakest-precondition engine for \C programs inside the \FramaC
+  framework. Efficiency is obtained by on-the-fly strong normalization
+  of terms and maximal sharing of sub-terms. Then, \Qed is equipped by
+  an extensible simplification engine. Rewriting rules,
+  abstract-interpretation over terms and decision procedures are
+  experimented inside the simplification engine. We finally present
+  both an automated and interactive theorem prover in logic modulo.
+\end{abstract}
+\vspace{1cm}
+]
+
+\section*{Introduction}
+
+Automated theorem prover for classical logic is an extensive research
+domain with very powerful operational results. Not all theorem provers
+are efficient over the same class of properties, and it is interesting
+to combine several theorem provers to achieve proof of complex
+logic propositions.
+
+\TODO
+
+\input{qed-logic}
+\input{qed-terms}
+\input{qed-proof}
+
+\end{document}

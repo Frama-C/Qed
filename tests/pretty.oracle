@@ -1,0 +1,15 @@
+Qed file "pretty.qed".
+Function f defined.
+let x_0 = (f 1 1) in
+let x_1 = (f x_0 x_0) in
+let x_2 = (f x_1 x_1) in
+forall x_3:int.
+exists y_0:int.
+let x_4 = (f y_0 y_0) in
+let x_5 = (f x_3 x_3) in
+(f x_2 (f x_4 x_4))=(f x_2 (f x_5 x_5)) : prop.
+Function h defined.
+Function g defined.
+let x_0 = (h 1) in let x_1 = (h x_0) in (g x_0 x_1 x_1) : int.
+let x_0 = (h 1) in let x_1 = (h x_0) in (g x_1 x_1 x_0) : int.
+Done.

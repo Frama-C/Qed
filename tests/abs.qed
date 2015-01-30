@@ -1,0 +1,11 @@
+let f : int -> int -> prop.
+let g : int -> int -> int.
+
+(* Verification of binding *)
+print forall x.exists y.f x y.
+print forall x.exists y.f y x.
+
+(* Verification of sharing *)
+print let x=g 1 1 in let x=g x x in let x=g x x in f x x.
+
+
