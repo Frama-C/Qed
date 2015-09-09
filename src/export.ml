@@ -774,7 +774,8 @@ struct
       (* --- Formulae                                                           --- *)
       (* -------------------------------------------------------------------------- *)
 
-      method private pp_expr_mode m fmt e = mode <- m ; self#pp_shared fmt e
+      method private pp_expr_mode m fmt e =
+        self#with_mode m (fun _old -> self#pp_shared fmt e)
 
       method pp_term = self#pp_expr_mode Mterm
       method pp_prop = self#pp_expr_mode Mpositive
