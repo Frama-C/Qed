@@ -192,7 +192,7 @@ struct
             self#pp_flow fmt cond
         | Boolean ->
             begin
-              fprintf fmt "@[<hov 2>ite(" ;
+              fprintf fmt "@[<hov 2>match_bool(" ;
               self#with_mode Mterm (fun _ -> self#pp_atom fmt a) ;
               fprintf fmt ",@ %a" self#pp_atom b ;
               fprintf fmt ",@ %a" self#pp_atom c ;
