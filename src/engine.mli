@@ -254,10 +254,4 @@ class type virtual ['z,'adt,'field,'logic,'tau,'var,'term] engine =
     (** Prints in {i term}, {i arithemtic} or {i prop} mode with
         	respect to provided type. *)
 
-    method declare_type : formatter -> 'adt -> int -> ('tau,'field,'logic) ftypedef -> unit
-    method declare_axiom :
-      formatter -> string -> 'var list -> ('var,'logic) ftrigger list list -> 'term -> unit
-    method declare_signature : formatter -> 'logic -> 'tau list -> 'tau -> unit
-    method declare_definition : formatter -> 'logic -> 'var list -> 'tau -> 'term -> unit
-
   end

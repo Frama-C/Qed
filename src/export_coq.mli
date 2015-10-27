@@ -34,12 +34,18 @@ sig
 
   open T
 
+  type trigger = (var,Fun.t) Engine.ftrigger
+  type typedef = (tau,Field.t,Fun.t) Engine.ftypedef
+
   class virtual engine :
     object
       inherit [Z.t,ADT.t,Field.t,Fun.t,tau,var,term] Engine.engine
       method op_spaced : string -> bool
-      method declare_fixpoint : prefix:string ->
-        formatter -> Fun.t -> var list -> tau -> term -> unit
+      method declare_type : formatter -> ADT.t -> int -> typedef -> unit
+      method declare_axiom : formatter -> string -> var list -> trigger list list -> term -> unit
+      method declare_fixpoint : prefix:string -> formatter -> Fun.t -> var list -> tau -> term -> unit
+      method declare_signature : formatter -> Fun.t -> tau list -> tau -> unit
+      method declare_definition : formatter -> Fun.t -> var list -> tau -> term -> unit
     end
 
 end

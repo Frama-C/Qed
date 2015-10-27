@@ -65,11 +65,11 @@ struct
   module Field = T.Field
   module Fun = T.Fun
 
-  type tau = (Field.t,ADT.t) datatype
   type var = Var.t
   type term = T.term
   type record = (Field.t * term) list
   type trigger = (T.var,Fun.t) ftrigger
+  type typedef = (tau,Field.t,Fun.t) Engine.ftypedef
 
   class virtual engine =
     object(self)

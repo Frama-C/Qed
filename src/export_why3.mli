@@ -35,7 +35,8 @@ sig
 
   open T
 
-  type trigger = (T.var,Fun.t) ftrigger
+  type trigger = (var,Fun.t) Engine.ftrigger
+  type typedef = (tau,Field.t,Fun.t) Engine.ftypedef
 
   class virtual engine :
     object
@@ -51,9 +52,12 @@ sig
       method pp_declare_adt : formatter -> ADT.t -> int -> unit
       method pp_declare_def : formatter -> ADT.t -> int -> tau -> unit
       method pp_declare_sum : formatter -> ADT.t -> int -> (Fun.t * tau list) list -> unit
+      method declare_type : formatter -> ADT.t -> int -> typedef -> unit
       method declare_prop : kind:string -> formatter -> string -> T.var list -> trigger list list -> term -> unit
-      method declare_fixpoint : prefix:string ->
-        formatter -> Fun.t -> var list -> tau -> term -> unit
+      method declare_axiom : formatter -> string -> var list -> trigger list list -> term -> unit
+      method declare_fixpoint : prefix:string -> formatter -> Fun.t -> var list -> tau -> term -> unit
+      method declare_signature : formatter -> Fun.t -> tau list -> tau -> unit
+      method declare_definition : formatter -> Fun.t -> var list -> tau -> term -> unit
     end
 
 end
