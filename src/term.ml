@@ -281,13 +281,16 @@ struct
     | Rdef _ -> Sdata
     | Div(x,y) | Mod(x,y) -> Kind.merge x.sort y.sort
     | Leq _ | Lt _ -> Sbool
-    | Eq(a,b) | Neq(a,b) -> Kind.merge Sbool (Kind.merge a.sort b.sort)
     | Apply(x,_) -> x.sort
     | If(_,a,b) -> Kind.merge a.sort b.sort
     | Fvar x -> Kind.of_tau x.vtau
     | Bvar(_,t) -> Kind.of_tau t
     | Bind((Forall|Exists),_,_) -> Sprop
     | Bind(Lambda,_,e) -> e.sort
+    | Eq(a,b) | Neq(a,b) ->
+        match a.sort , b.sort with
+        | Sprop , _ | _ , Sprop -> Sprop
+        | _ -> Sbool
 
   let rec size_list n w = function
     | [] -> n+w

@@ -44,6 +44,18 @@ let tau_of_arraysort = function
   | Sarray s -> tau_of_sort s
   | _ -> raise Not_found
 
+let tau_merge a b =
+  match a,b with
+  | Bool , Bool -> Bool
+  | (Bool|Prop) , (Bool|Prop) -> Prop
+  | Int , Int -> Int
+  | (Int|Real) , (Int|Real) -> Real
+  | _ -> raise Not_found
+
+let rec merge_list t f = function
+  | [] -> t
+  | e::es -> merge_list (tau_merge t (f e)) f es
+
 module Make(T : Term) =
 struct
 
@@ -247,13 +259,18 @@ struct
                    | Array(_,v) -> v
                    | _ -> raise Not_found
                  with Not_found -> tau_of_arraysort (T.sort m))
+            | Rdef [] -> raise Not_found
             | Rdef ((f,_)::_) -> self#typeof_setfield f
             | Rget (_,f) -> self#typeof_getfield f
-            | True | False | Kint _ | Kreal _ | Times _ | Add _
-            | Mul _ | Div _ | Mod _ | Eq _ | Neq _ | Leq _ | Lt _
-            | And _ | Or _ | Bind _
-              -> assert false (** absurd: Term give them a simple sort *)
-            | Not _ | Imply _ | If _ | Apply _ | Rdef [] -> raise Not_found
+            | True | False -> Bool
+            | Kint _ -> Int
+            | Kreal _ -> Real
+            | Times(_,e) -> self#typecheck e
+            | Add es | Mul es -> merge_list Int self#typecheck es
+            | Div (a,b) | Mod (a,b) | If(_,a,b) ->
+                tau_merge (self#typecheck a) (self#typecheck b)
+            | Eq _ | Neq _ | Leq _ | Lt _ | And _ | Or _ | Not _ | Imply _ -> Bool
+            | Apply _ | Bind _ -> raise Not_found
 
       (* -------------------------------------------------------------------------- *)
       (* --- Lets                                                               --- *)

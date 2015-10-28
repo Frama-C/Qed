@@ -44,10 +44,10 @@ let rec merge a b =
   | Sbool , _ | _ , Sbool -> Sbool
   | Sarray x , Sarray y -> Sarray (merge x y)
   | Sarray _ , _ | _ , Sarray _ -> Sdata
-  | Sint , Sreal | Sreal , Sint -> Sreal
   | Sint , Sint -> Sint
+  | Sint , Sreal | Sreal , Sint -> Sreal
   | Sreal , Sreal -> Sreal
-  | Sdata , _ | _ , Sdata -> Sdata
+  | Sdata , _ | _ , Sdata -> Sdata 
 
 let image = function Sarray s -> s | _ -> Sdata
 
