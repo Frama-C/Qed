@@ -106,6 +106,7 @@ struct
 
   module VarMap = Map.Make(T.Var)
   module Ident = Map.Make(String)
+  module Users = Set.Make(String)
 
   type allocator = {
     mutable base : string -> string ;
@@ -113,6 +114,8 @@ struct
     mutable fvars : string VarMap.t ;
     mutable bvars : string Intmap.t ;
     mutable share : string Tmap.t ;
+    mutable unzip : Tset.t ;
+    mutable users : Users.t ;
   }
 
   let identity x = x
@@ -123,7 +126,19 @@ struct
     fvars = VarMap.empty ;
     bvars = Intmap.empty ;
     share = Tmap.empty ;
+    unzip = Tset.empty ;
+    users = Users.empty ;
   }
+
+  let clear_alloc lnk =
+    begin
+      lnk.index <- Ident.empty ;
+      lnk.fvars <- VarMap.empty ;
+      lnk.bvars <- Intmap.empty ;
+      lnk.share <- Tmap.empty ;
+      lnk.unzip <- Tset.empty ;
+      lnk.users <- Users.empty ;
+    end
 
   let copy_alloc lnk = {
     base = lnk.base ;
@@ -131,14 +146,25 @@ struct
     fvars = lnk.fvars ;
     bvars = lnk.bvars ;
     share = lnk.share ;
+    unzip = lnk.unzip ;
+    users = lnk.users ;
   }
 
-  let fresh basename lnk =
+  let rec find_fresh ~suggest lnk basename k =
+    let x =
+      if k=0 && String.length basename = 1 then basename
+      else Printf.sprintf "%s_%d" basename k in
+    if Users.mem x lnk.users then
+      find_fresh ~suggest lnk basename (succ k)
+    else
+      ( if not suggest then
+          lnk.index <- Ident.add basename (succ k) lnk.index
+      ; x )
+  
+  let fresh ?(suggest=false) basename lnk =
     let basename = lnk.base basename in
     let k = try Ident.find basename lnk.index with Not_found -> 0 in
-    lnk.index <- Ident.add basename (succ k) lnk.index ;
-    if k=0 && String.length basename = 1 then basename
-    else Printf.sprintf "%s_%d" basename k
+    find_fresh ~suggest lnk basename k
 
   let bind_bvar k t lnk =
     let x = fresh (Tau.basename t) lnk in
@@ -155,8 +181,36 @@ struct
   let find_fvar v lnk = VarMap.find v lnk.fvars
 
   let bind_term x t lnk =
-    lnk.share <- Tmap.add t x lnk.share
+    begin
+      lnk.users <- Users.add x lnk.users ;
+      lnk.share <- Tmap.add t x lnk.share ;
+    end
 
+  let unbind_term t lnk =
+    begin
+      (try
+         let x = Tmap.find t lnk.share in
+         lnk.users <- Users.remove x lnk.users ;
+         lnk.share <- Tmap.remove t lnk.share ;
+       with Not_found -> ()) ;
+      lnk.unzip <- Tset.add t lnk.unzip ;
+    end
+    
+  module Env =
+  struct
+    type t = allocator
+    let create () = create_alloc extract_ident
+    let clear lnk = clear_alloc lnk
+    let used lnk name = Users.mem name lnk.users
+    let fresh lnk ?(suggest=false) basename = fresh ~suggest basename lnk
+    let define lnk x t = bind_term x t lnk
+    let unfold lnk t = unbind_term t lnk
+    let lookup lnk t =
+      try `Defined(Tmap.find t lnk.share)
+      with Not_found ->
+        if Tset.mem t lnk.unzip then `Unfolded else `Auto
+  end
+  
   (* -------------------------------------------------------------------------- *)
   (* --- Binders                                                            --- *)
   (* -------------------------------------------------------------------------- *)
@@ -194,22 +248,24 @@ struct
 
       method virtual datatype : ADT.t -> string
       method virtual field : Field.t -> string
-      method basename : string -> string = fun x -> x
+      method basename : string -> string = identity
 
       val mutable alloc = create_alloc identity (* self is not available yet *)
       initializer alloc.base <- self#basename
 
-      method local (job : unit -> unit) =
+      method lookup t : scope = Env.lookup alloc t
+      
+      method scope env (job : unit -> unit) =
         let stack = alloc in
-        alloc <- copy_alloc alloc ;
+        alloc <- env ;
         try job () ; alloc <- stack
         with err -> alloc <- stack ; raise err
+      
+      method local (job : unit -> unit) =
+        self#scope (copy_alloc alloc) job
 
       method global (job : unit -> unit) =
-        let stack = alloc in
-        alloc <- create_alloc self#basename ;
-        try job () ; alloc <- stack
-        with err -> alloc <- stack ; raise err
+        self#scope (create_alloc self#basename) job
 
       method bind v = bind_fvar v alloc
       method find v = VarMap.find v alloc.fvars
@@ -642,7 +698,7 @@ struct
 
       method private pp_shared fmt e =
         let shared e = Tmap.mem e alloc.share in
-        let shareable e = self#is_shareable e in
+        let shareable e = self#is_shareable e || Tset.mem e alloc.unzip in
         let es = T.shared ~shareable ~shared [e] in
         if es <> [] then
           self#local

@@ -84,8 +84,8 @@ struct
     let hash t = t.hash
     let equal = (==)
   end
-  module Tset   = Idxset.Make(E)
-  module Tmap   = Idxmap.Make(E)
+  module Tset = Idxset.Make(E)
+  module Tmap = Idxmap.Make(E)
 
   (* ------------------------------------------------------------------------ *)
   (* ---  Parameters                                                      --- *)

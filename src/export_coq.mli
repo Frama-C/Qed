@@ -33,13 +33,13 @@ module Make(T : Term) :
 sig
 
   open T
-
+  module Env : Engine.Env with type term := term
   type trigger = (var,Fun.t) Engine.ftrigger
   type typedef = (tau,Field.t,Fun.t) Engine.ftypedef
 
   class virtual engine :
     object
-      inherit [Z.t,ADT.t,Field.t,Fun.t,tau,var,term] Engine.engine
+      inherit [Z.t,ADT.t,Field.t,Fun.t,tau,var,term,Env.t] Engine.engine
       method op_spaced : string -> bool
       method declare_type : formatter -> ADT.t -> int -> typedef -> unit
       method declare_axiom : formatter -> string -> var list -> trigger list list -> term -> unit

@@ -77,9 +77,24 @@ type ('t,'f,'c) ftypedef =
   | Trec of ('f * 't) list
   | Tsum of ('c * 't list) list
 
+type scope = [ `Auto | `Unfolded | `Defined of string ]
+
+module type Env =
+sig
+  type t
+  type term
+  val create : unit -> t
+  val clear : t -> unit
+  val used : t -> string -> bool
+  val fresh : t -> ?suggest:bool -> string -> string
+  val define : t -> string -> term -> unit
+  val unfold : t -> term -> unit
+  val lookup : t -> term -> scope
+end
+
 (** Generic Engine Signature *)
 
-class type virtual ['z,'adt,'field,'logic,'tau,'var,'term] engine =
+class type virtual ['z,'adt,'field,'logic,'tau,'var,'term,'env] engine =
   object
 
     (** {3 Linking} *)
@@ -92,6 +107,10 @@ class type virtual ['z,'adt,'field,'logic,'tau,'var,'term] engine =
 
     (** {3 Global and Local Environment} *)
 
+    method lookup : 'term -> scope
+    
+    method scope : 'env -> (unit -> unit) -> unit
+    
     method local : (unit -> unit) -> unit
     (** Calls the continuation in a local copy of the environment.
         	Previous environment is restored after return, but allocators

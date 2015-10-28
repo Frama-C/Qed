@@ -35,6 +35,7 @@ struct
 
   module T = T
   module E = Export_whycore.Make(T)
+  module Env = E.Env
 
   open T
 

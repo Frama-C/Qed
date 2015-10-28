@@ -35,7 +35,7 @@ module Make(T : Term) :
 sig
 
   open T
-
+  module Env : Engine.Env with type term := term
   type trigger = (T.var,Fun.t) ftrigger
   type typedef = (tau,Field.t,Fun.t) ftypedef
 
@@ -47,6 +47,8 @@ sig
       method basename : string -> string
       method virtual link : Fun.t -> link
 
+      method lookup : t -> scope
+      method scope : Env.t -> (unit -> unit) -> unit
       method local : (unit -> unit) -> unit
       method global : (unit -> unit) -> unit
 

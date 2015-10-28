@@ -35,6 +35,7 @@ struct
 
   module T = T
   module E = Export.Make(T)
+  module Env = E.Env
 
   open T
 

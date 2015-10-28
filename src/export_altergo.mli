@@ -34,13 +34,13 @@ module Make(T : Term) :
 sig
 
   open T
-
+  module Env : Engine.Env with type term := term
+  
   type trigger = (T.var,Fun.t) Engine.ftrigger
   type typedef = (tau,Field.t,Fun.t) Engine.ftypedef
 
   class virtual engine :
     object
-
       method set_quantify_let : bool -> unit
 
       method typecheck : term -> tau (** or raise Not_found *)
@@ -51,7 +51,7 @@ sig
       method virtual get_typedef : ADT.t -> tau option
       method virtual set_typedef : ADT.t -> tau -> unit
 
-      inherit [Z.t,ADT.t,Field.t,Fun.t,tau,var,term] Engine.engine
+      inherit [Z.t,ADT.t,Field.t,Fun.t,tau,var,term,Env.t] Engine.engine
       method op_spaced : string -> bool
       method op_record : string * string
       method pp_forall : tau -> string list printer

@@ -61,6 +61,7 @@ struct
 
   open T
   module E = Export_whycore.Make(T)
+  module Env = E.Env
   module ADT = T.ADT
   module Field = T.Field
   module Fun = T.Fun
