@@ -89,7 +89,7 @@ clean::
 distclean::
 	rm -f ../bin/Qed.*
 
-OPTML= -annot -w PSUZ+7-3 -warn-error PSUZ+7-3
+OPTML= -bin-annot -w PSUZ+7-3 -warn-error PSUZ+7-3
 INCLUDES=
 OPTCMI=
 OPTCMO=
