@@ -2141,6 +2141,16 @@ struct
     m.roots <- e :: m.roots ;
     walk m (Bvars.order e.bind) e
 
+  let share m e =
+    if lc_closed e then
+      begin
+        m.roots <- e :: m.roots ;
+        m.shared <- Tset.add e m.shared ;
+        m.mark <- Tmap.add e Marked m.mark ;
+        lc_iter (walk m (Bvars.order e.bind)) e
+      end
+    else mark m e
+  
   type defs = {
     mutable stack : term list ;
     mutable defined : Tset.t ;

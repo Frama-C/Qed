@@ -393,14 +393,31 @@ sig
   (** Low-level shared primitives: [shared] is actually a combination of
       building marks, marking terms, and extracting definitions:
 
-      {[ let m = marks ?... () in List.iter (mark m) es ; defs m ]} *)
+      {[ let share ?... e =
+           let m = marks ?... () in 
+           List.iter (mark m) es ; 
+           defs m ]} *)
 
   type marks
+
+  (** Create a marking accumulator
+      @param shared terms that are (or will be) already shared
+      (default to none) 
+      @param shareable terms that can be shared (default to all) *)
   val marks :
     ?shared:(term -> bool) ->
     ?shareable:(term -> bool) ->
     unit -> marks
+
+  (** Mark a term to be printed *)
   val mark : marks -> term -> unit
+
+  (** Mark a term to be explicitely shared *)
+  val share : marks -> term -> unit
+
+  (** Returns a list of terms to be shared among all {i shared} or {i
+      marked} subterms.  The order of terms is consistent with
+      definition order: head terms might be used in tail ones. *)
   val defs : marks -> term list
 
 end
