@@ -263,14 +263,19 @@ class type virtual ['z,'adt,'field,'logic,'tau,'var,'term,'env] engine =
 
     method pp_term : 'term printer
     (** Prints in {i term} mode.
-        	Default uses [self#pp_shared] with mode [Mterm] inside an [<hov>] box. *)
+        Default uses [self#pp_shared] with mode [Mterm] inside an [<hov>] box. *)
 
     method pp_prop : 'term printer
     (** Prints in {i prop} mode.
-        	Default uses [self#pp_shared] with mode [Mprop] inside an [<hv>] box. *)
+        Default uses [self#pp_shared] with mode [Mprop] inside an [<hv>] box. *)
 
     method pp_expr : 'tau -> 'term printer
     (** Prints in {i term}, {i arithemtic} or {i prop} mode with
-        	respect to provided type. *)
+        respect to provided type. *)
+
+    method pp_sort : 'term printer
+    (** Prints in {i term}, {i arithemtic} or {i prop} mode with
+        respect to the sort of term. Boolean expression that also have a 
+        property form are printed in [Mprop] mode. *)
 
   end

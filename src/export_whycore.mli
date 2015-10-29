@@ -134,6 +134,7 @@ sig
       method pp_var : string printer
       method pp_term : term printer
       method pp_prop : term printer
+      method pp_sort : term printer
       method pp_expr : tau -> term printer
 
       method pp_param : (string * tau) printer

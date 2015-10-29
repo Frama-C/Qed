@@ -835,7 +835,14 @@ struct
       method pp_term = self#pp_expr_mode Mterm
       method pp_prop = self#pp_expr_mode Mpositive
       method pp_expr (tau:tau) = self#pp_expr_mode (tmode tau)
-
+      method pp_sort fmt e =
+        let mode = match T.sort e with
+          | Sprop -> Mpositive
+          | Sbool when has_prop_form self#link e -> Mpositive
+          | Sint -> Mterm_int
+          | Sreal -> Mterm_real
+          | Sbool | Sdata | Sarray _ -> Mterm
+        in self#pp_expr_mode mode fmt e
     end
 
 end
