@@ -107,18 +107,20 @@ class type virtual ['z,'adt,'field,'logic,'tau,'var,'term,'env] engine =
 
     (** {3 Global and Local Environment} *)
 
-    method lookup : 'term -> scope
-    
+    method env : 'env (** Returns a fresh copy of the current environment. *)
+    method lookup : 'term -> scope (** Term scope in the current environment. *)
     method scope : 'env -> (unit -> unit) -> unit
+    (** Calls the continuation in the provided environment. 
+        Previous environment is restored after return. *)
     
     method local : (unit -> unit) -> unit
     (** Calls the continuation in a local copy of the environment.
-        	Previous environment is restored after return, but allocators
-        	are left unchanged to enforce on-the-fly alpha-conversion. *)
+        Previous environment is restored after return, but allocators
+        are left unchanged to enforce on-the-fly alpha-conversion. *)
 
     method global : (unit -> unit) -> unit
     (** Calls the continuation in a fresh local environment.
-        	Previous environment is restored after return. *)
+        Previous environment is restored after return. *)
 
     method bind : 'var -> string
     method find : 'var -> string

@@ -62,6 +62,7 @@ sig
       (** Allows to sanitize the basename used for in this engine for variable. *)
       method virtual link : Fun.t -> link
 
+      method env : Env.t
       method lookup : term -> scope
       method scope : Env.t -> (unit -> unit) -> unit
       method local : (unit -> unit) -> unit

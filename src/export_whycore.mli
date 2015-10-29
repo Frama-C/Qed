@@ -47,6 +47,7 @@ sig
       method basename : string -> string
       method virtual link : Fun.t -> link
 
+      method env : Env.t
       method lookup : t -> scope
       method scope : Env.t -> (unit -> unit) -> unit
       method local : (unit -> unit) -> unit

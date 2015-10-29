@@ -254,6 +254,8 @@ struct
       initializer alloc.base <- self#basename
 
       method lookup t : scope = Env.lookup alloc t
+
+      method env = copy_alloc alloc
       
       method scope env (job : unit -> unit) =
         let stack = alloc in
