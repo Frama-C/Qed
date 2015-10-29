@@ -209,6 +209,8 @@ struct
       try `Defined(Tmap.find t lnk.share)
       with Not_found ->
         if Tset.mem t lnk.unzip then `Unfolded else `Auto
+    let shared lnk t = Tmap.mem t lnk.share
+    let shareable lnk t = not (Tset.mem t lnk.unzip)
   end
   
   (* -------------------------------------------------------------------------- *)

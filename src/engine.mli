@@ -89,6 +89,8 @@ sig
   val fresh : t -> ?suggest:bool -> string -> string
   val define : t -> string -> term -> unit
   val unfold : t -> term -> unit
+  val shared : t -> term -> bool
+  val shareable : t -> term -> bool (** not unfolded *)
   val lookup : t -> term -> scope
 end
 
