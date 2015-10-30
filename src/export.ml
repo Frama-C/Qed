@@ -258,6 +258,12 @@ struct
       method lookup t : scope = Env.lookup alloc t
 
       method env = copy_alloc alloc
+      method marks =
+        let env = self#env in
+        let shared = Env.shared env in
+        let shareable e = self#is_shareable e && Env.shareable env e in
+        let marks = T.marks ~shared ~shareable () in
+        env , marks
       
       method scope env (job : unit -> unit) =
         let stack = alloc in

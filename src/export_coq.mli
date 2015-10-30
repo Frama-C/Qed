@@ -40,6 +40,7 @@ sig
   class virtual engine :
     object
       inherit [Z.t,ADT.t,Field.t,Fun.t,tau,var,term,Env.t] Engine.engine
+      method marks : Env.t * T.marks
       method op_spaced : string -> bool
       method declare_type : formatter -> ADT.t -> int -> typedef -> unit
       method declare_axiom : formatter -> string -> var list -> trigger list list -> term -> unit
