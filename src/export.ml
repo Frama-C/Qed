@@ -260,7 +260,7 @@ struct
 
       method env = copy_alloc alloc
       method marks =
-        let env = alloc in
+        let env = alloc (* NOT a fresh copy *) in
         let shared = Env.shared env in
         let shareable e = self#is_shareable e && Env.shareable env e in
         let marks = T.marks ~shared ~shareable () in
