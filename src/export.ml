@@ -200,6 +200,7 @@ struct
   struct
     type t = allocator
     let create () = create_alloc extract_ident
+    let copy = copy_alloc
     let clear lnk = clear_alloc lnk
     let used lnk name = Users.mem name lnk.users
     let fresh lnk ?(suggest=false) basename = fresh ~suggest basename lnk
@@ -259,7 +260,7 @@ struct
 
       method env = copy_alloc alloc
       method marks =
-        let env = self#env in
+        let env = alloc in
         let shared = Env.shared env in
         let shareable e = self#is_shareable e && Env.shareable env e in
         let marks = T.marks ~shared ~shareable () in

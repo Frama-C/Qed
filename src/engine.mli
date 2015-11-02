@@ -84,6 +84,7 @@ sig
   type t
   type term
   val create : unit -> t
+  val copy : t -> t
   val clear : t -> unit
   val used : t -> string -> bool
   val fresh : t -> ?suggest:bool -> string -> string
