@@ -243,6 +243,13 @@ struct
           | F_right f, _ -> Plib.pp_fold_apply_rev ~f pretty fmt (List.rev ts)
           | F_assoc op, _ -> Plib.pp_assoc ~op pretty fmt ts
           | F_subst s, _ -> Plib.substitute_list pretty s fmt ts
+          | F_list(fc,fn) , _ ->
+              let rec plist fc fn fmt = function
+                | [] -> pp_print_string fmt fn
+                | x::xs ->
+                    fprintf fmt "[<hov 2>(%s@ %a@ %a)@]" fc
+                      pretty x (plist fc fn) xs
+              in plist fc fn fmt ts
         in fprintf fmt "@[<hov 2>%a@]" pretty t
 
       (* -------------------------------------------------------------------------- *)
