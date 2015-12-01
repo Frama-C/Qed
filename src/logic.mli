@@ -130,8 +130,8 @@ type ('f,'a) funtype = {
   - 'a: representation of abstract data types
   - 'd: representation of functions
   - 'x: representation of free variables
-  - 'b: representation of bound variables
-  - 'e: kind of expression (phantom type)
+  - 'b: representation of bound term (phantom type equal to 'e)
+  - 'e: sub-expression
 *)
 type ('z,'f,'a,'d,'x,'b,'e) term_repr =
   | True
@@ -156,10 +156,10 @@ type ('z,'f,'a,'d,'x,'b,'e) term_repr =
   | Not   of 'e
   | Imply of 'e list * 'e
   | If    of 'e * 'e * 'e
-  | Fun   of 'd * 'e list (** Direct application of a function? *)
+  | Fun   of 'd * 'e list (** Complete call (no partial app.) *)
   | Fvar  of 'x
   | Bvar  of int * ('f,'a) datatype
-  | Apply of 'e * 'e list (** Indirect/HO application of a function? *)
+  | Apply of 'e * 'e list (** High-Order application (Cf. binder) *)
   | Bind  of binder * ('f,'a) datatype * 'b
 
 type ('z,'a) affine = { constant : 'z ; factors : ('z * 'a) list }
