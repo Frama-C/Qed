@@ -27,7 +27,7 @@ depend:
 	$(OCAMLDEP) $(INCLUDES) *.ml *.mli *.mll *.mly > .depend
 
 clean::
-	rm -f *~ *.cmi *.cmo *.cma *.cmx *.o *.a *.so *.cmxa
+	rm -f *~ *.cm* *.o *.a *.so *.annot
 
 .SUFFIXES: .ml .mli .mll .mly .cmo .cmi .cmx
 
