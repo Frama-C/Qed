@@ -138,24 +138,24 @@ type ('z,'f,'a,'d,'x,'b,'e) term_repr =
   | False
   | Kint  of 'z
   | Kreal of R.t
-  | Times of 'z * 'e
-  | Add   of 'e list
-  | Mul   of 'e list
+  | Times of 'z * 'e      (** mult: k1 * e2 *)
+  | Add   of 'e list      (** add:  e11 + ... + e1n *)
+  | Mul   of 'e list      (** mult: e11 * ... * e1n *)
   | Div   of 'e * 'e
   | Mod   of 'e * 'e
   | Eq    of 'e * 'e
   | Neq   of 'e * 'e
   | Leq   of 'e * 'e
   | Lt    of 'e * 'e
-  | Aget  of 'e * 'e
-  | Aset  of 'e * 'e * 'e
+  | Aget  of 'e * 'e      (** access: array1[idx2] *)
+  | Aset  of 'e * 'e * 'e (** update: array1[idx2 -> elem3] *)
   | Rget  of 'e * 'f
   | Rdef  of ('f * 'e) list
-  | And   of 'e list
-  | Or    of 'e list
+  | And   of 'e list      (** and: e11 && ... && e1n *)
+  | Or    of 'e list      (** or:  e11 || ... || e1n *)
   | Not   of 'e
-  | Imply of 'e list * 'e
-  | If    of 'e * 'e * 'e
+  | Imply of 'e list * 'e (** imply: (e11 && ... && e1n) ==> e2 *)
+  | If    of 'e * 'e * 'e (** ite: if c1 then e2 else e3 *)
   | Fun   of 'd * 'e list (** Complete call (no partial app.) *)
   | Fvar  of 'x
   | Bvar  of int * ('f,'a) datatype
