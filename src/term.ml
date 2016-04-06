@@ -1652,12 +1652,12 @@ struct
     | _ ->
         try cache_find mu e
         with Not_found ->
-          cache_bind mu e
-            (if lc_closed e
-             then
-               try sigma e
-               with Not_found -> rebuild (gsubst mu sigma) e
-             else rebuild (gsubst mu sigma) e)
+          let e0 = rebuild (gsubst mu sigma) e in
+          let e1 =
+            if lc_closed e0 then
+              try sigma e0 with Not_found -> e0
+            else e0 in
+          cache_bind mu e e1
 
   let e_subst ?sigma f e =
     let cache = match sigma with None -> ref Tmap.empty | Some c -> c in
