@@ -319,6 +319,41 @@ struct
     | Bind(_,_,p) -> 3 + p.size
 
   (* -------------------------------------------------------------------------- *)
+  (* --- Symbols                                                            --- *)
+  (* -------------------------------------------------------------------------- *)
+
+  type t = term
+  let equal = (==)
+
+  let is_atomic e =
+    match e.repr with
+    | True | False | Kint _ | Kreal _ | Fvar _ | Bvar _ -> true
+    | _ -> false
+
+  let is_simple e =
+    match e.repr with
+    | True | False | Kint _ | Kreal _ | Fvar _ | Bvar _ | Fun(_,[]) -> true
+    | _ -> false
+
+  let is_closed e = Vars.is_empty e.vars
+
+  let is_prop e = match e.sort with
+    | Sprop | Sbool -> true
+    | _ -> false
+
+  let is_int e = match e.sort with
+    | Sint -> true
+    | _ -> false
+
+  let is_real e = match e.sort with
+    | Sreal -> true
+    | _ -> false
+
+  let is_arith e = match e.sort with
+    | Sreal | Sint -> true
+    | _ -> false
+
+  (* -------------------------------------------------------------------------- *)
   (* --- Comparison                                                         --- *)
   (* -------------------------------------------------------------------------- *)
 
@@ -470,7 +505,15 @@ struct
   end
 
   let weigth e = e.size
-  let compare = COMPARE.compare
+  let atom_min a b = if 0 < COMPARE.compare a b then b else a
+
+  let extern_not = ref (fun _ -> assert false)
+  let compare a b =
+    if a == b then 0 else
+      let a' = if is_prop a then !extern_not a else a in
+      let b' = if is_prop b then !extern_not b else b in
+      if a == b' || a' == b then COMPARE.compare a b
+      else COMPARE.compare (atom_min a a') (atom_min b b')
 
   (* -------------------------------------------------------------------------- *)
   (* ---  Hconsed                                                           --- *)
@@ -757,7 +800,6 @@ struct
 
 
   let cached_not = ref (fun _ -> assert false)
-  let extern_not = ref (fun _ -> assert false)
   let extern_ite = ref (fun _ -> assert false)
   let extern_eq = ref (fun _ -> assert false)
   let extern_neq = ref (fun _ -> assert false)
@@ -941,41 +983,6 @@ struct
   let e_funraw = c_fun
   let e_fun = e_fungen
   let () = extern_fun := e_fun
-
-  (* -------------------------------------------------------------------------- *)
-  (* --- Symbols                                                            --- *)
-  (* -------------------------------------------------------------------------- *)
-
-  type t = term
-  let equal = (==)
-
-  let is_atomic e =
-    match e.repr with
-    | True | False | Kint _ | Kreal _ | Fvar _ | Bvar _ -> true
-    | _ -> false
-
-  let is_simple e =
-    match e.repr with
-    | True | False | Kint _ | Kreal _ | Fvar _ | Bvar _ | Fun(_,[]) -> true
-    | _ -> false
-
-  let is_closed e = Vars.is_empty e.vars
-
-  let is_prop e = match e.sort with
-    | Sprop | Sbool -> true
-    | _ -> false
-
-  let is_int e = match e.sort with
-    | Sint -> true
-    | _ -> false
-
-  let is_real e = match e.sort with
-    | Sreal -> true
-    | _ -> false
-
-  let is_arith e = match e.sort with
-    | Sreal | Sint -> true
-    | _ -> false
 
   (* -------------------------------------------------------------------------- *)
   (* --- Ground & Arithmetics                                               --- *)
