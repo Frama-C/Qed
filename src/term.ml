@@ -703,17 +703,23 @@ struct
 
   let c_times z t = insert(Times(z,t))
 
-  let c_and = function
+  let c_and_sorted = function
     | [] -> e_true
     | [x] -> x
-    | xs -> insert(And(List.sort compare xs))
+    | xs -> insert(And(xs))
 
-  let c_or = function
+  let c_and xs = c_and_sorted (List.sort_uniq compare xs)
+
+  let c_or_sorted = function
     | [] -> e_false
     | [x] -> x
-    | xs -> insert(Or(List.sort compare xs))
+    | xs -> insert(Or(xs))
 
-  let c_imply hs p = insert(Imply(List.sort compare hs,p))
+  let c_or xs = c_or_sorted (List.sort_uniq compare xs)
+
+  let c_imply_sorted hs p = insert(Imply(hs,p))
+
+  let c_imply hs = c_imply_sorted (List.sort_uniq compare hs)
 
   let c_not x = insert(Not x)
 
@@ -1196,7 +1202,7 @@ struct
         | False  -> raise Absorbant
         | True   -> fold_and acc others
         | And xs -> fold_and (fold_and acc xs) others
-        | _      -> fold_and ((x,e_not x)::acc) others
+        | _      -> fold_and (x::acc) others
 
   let rec fold_or acc xs =
     match xs with
@@ -1206,35 +1212,30 @@ struct
         | True  -> raise Absorbant
         | False -> fold_or acc others
         | Or xs -> fold_or (fold_or acc xs) others
-        | _     -> fold_or ((x,e_not x)::acc) others
+        | _     -> fold_or (x::acc) others
 
   (* an atom is (t,not t) *)
 
-  let atom_eq a b = fst a == fst b
-  let atom_opp a b = fst a == snd b || snd a == fst a
-
-  let compare_atom (x1,nx1) (x2,nx2) =
-    Pervasives.compare (min x1.id nx1.id) (min x2.id nx2.id)
-
-  let rec fact_atom acc ms =
-    match acc , ms with
-    | a::_ , b::qs when atom_eq a b -> fact_atom acc qs
-    | a::_ , b::_ when atom_opp a b -> raise Absorbant
-    | _ , b::qs -> fact_atom (b::acc) qs
-    | _ , [] -> acc
+  let atom_opp a b = a == e_not b
+  let rec check_absorbant = function
+    | []  -> ()
+    | a::b::_ when atom_opp a b -> raise Absorbant
+    | _::qs  -> check_absorbant qs
 
   let conjunction ts =
     try
       let ms = fold_and [] ts in
-      let ms = fact_atom [] (List.sort compare_atom ms) in
-      c_and (List.map fst ms)
+      let ms = List.sort_uniq compare ms in
+      check_absorbant ms;
+      c_and_sorted ms
     with Absorbant -> e_false
 
   let disjunction ts =
     try
       let ms = fold_or [] ts in
-      let ms = fact_atom [] (List.sort compare_atom ms) in
-      c_or (List.map fst ms)
+      let ms = List.sort_uniq compare ms in
+      check_absorbant ms;
+      c_or_sorted ms
     with Absorbant -> e_true
 
   let rec implication a b =
@@ -1250,12 +1251,12 @@ struct
           begin
             match List.filter (fun t -> t != c) ts with
             | [] -> b
-            | ts -> c_imply ts b
+            | ts -> c_imply_sorted ts b
           end
     | _ ->
         if a == b then e_true else
           let c = e_not b in
-          if c == a then c else c_imply [a] b
+          if c == a then c else c_imply_sorted [a] b
 
   type structural =
     | S_equal        (* equal constants or constructors *)
