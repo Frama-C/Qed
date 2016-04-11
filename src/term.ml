@@ -1248,7 +1248,7 @@ struct
     | _ ->
         if a == b then e_true else
           let c = e_not b in
-          if c == a then c else c_imply [a] b
+          if c == a then b else c_imply [a] b
 
   type structural =
     | S_equal        (* equal constants or constructors *)
