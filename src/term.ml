@@ -730,23 +730,17 @@ struct
 
   let c_times z t = insert(Times(z,t))
 
-  let c_and_sorted = function
+  let c_and = function
     | [] -> e_true
     | [x] -> x
     | xs -> insert(And(xs))
 
-  let _c_and xs = c_and_sorted (List.sort_uniq compare xs)
-
-  let c_or_sorted = function
+  let c_or = function
     | [] -> e_false
     | [x] -> x
     | xs -> insert(Or(xs))
 
-  let _c_or xs = c_or_sorted (List.sort_uniq compare xs)
-
-  let c_imply_sorted hs p = insert(Imply(hs,p))
-
-  let _c_imply hs = c_imply_sorted (List.sort_uniq compare hs)
+  let c_imply hs p = insert(Imply(hs,p))
 
   let c_not x = insert(Not x)
 
@@ -1254,7 +1248,7 @@ struct
       let ms = fold_and [] ts in
       let ms = List.sort_uniq compare ms in
       check_absorbant ms;
-      c_and_sorted ms
+      c_and ms
     with Absorbant -> e_false
 
   let disjunction ts =
@@ -1262,7 +1256,7 @@ struct
       let ms = fold_or [] ts in
       let ms = List.sort_uniq compare ms in
       check_absorbant ms;
-      c_or_sorted ms
+      c_or ms
     with Absorbant -> e_true
 
   let rec implication a b =
@@ -1279,11 +1273,11 @@ struct
           begin
             match List.filter (fun t -> t != c) ts with
             | [] -> b
-            | ts -> c_imply_sorted ts b
+            | ts -> c_imply ts b
           end
     | _ ->
         let c = e_not b in
-        if c == a then b else c_imply_sorted [a] b
+        if c == a then b else c_imply [a] b
 
   type structural =
     | S_equal        (* equal constants or constructors *)
@@ -1457,7 +1451,23 @@ struct
 
   let e_imply hs p =
     match p.repr with
-    | Imply(hs',p') -> implication (e_and (hs @ hs')) p'
+    | True -> e_true
+    | Imply(hs_sorted,p) -> begin 
+        (* (hs ==> hs_sorted ==> p) <==> (hs_sorted ==> hs ==> p) *)
+        let hs_implies_p = implication (e_and hs) p in
+        match hs_implies_p.repr with
+        | True -> e_true
+        | Imply(hs,p) -> begin try 
+              (* (hs_sorted ==> hs ==> p) <==> (hs_sorted && hs ==> p) *)
+              let hs_sorted_and_hs = fold_and hs_sorted hs in
+              let hs_sorted_and_hs = List.sort_uniq compare hs_sorted_and_hs in
+              check_absorbant hs_sorted_and_hs;
+              c_imply hs_sorted_and_hs p
+            with | Absorbant -> e_true
+          end
+        | _ -> (* hs_sorted ==> hs ==> p *)
+            implication (c_and hs_sorted) hs_implies_p
+      end
     | _ -> implication (e_and hs) p
 
   let () = cached_not := function
