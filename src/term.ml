@@ -1458,13 +1458,15 @@ struct
     | Imply(hs0,p) ->
         begin
           try
+            if List.memq p hs then raise Absorbant ;
             let hs = fold_and hs0 hs in
             let hs = List.sort_uniq compare hs in
             check_absorbant hs ;
-            implication (c_and hs) p
+            c_imply hs p
           with Absorbant -> e_true
         end
-    | _ -> implication (e_and hs) p
+    | _ ->
+        implication (e_and hs) p
 
   let () = cached_not := function
       | And xs -> e_or (List.map e_not xs)
