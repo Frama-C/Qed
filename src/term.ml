@@ -367,7 +367,7 @@ struct
       let cmp = Field.compare f g in
       if cmp <> 0 then cmp else phi x y
 
-    let cmp_struct phi0 phi a b =
+    let cmp_struct phi a b =
       match a.repr , b.repr with
 
       | True , True -> 0
@@ -400,12 +400,12 @@ struct
       | Leq(a1,b1) , Leq(a2,b2)
       | Div(a1,b1) , Div(a2,b2)
       | Mod(a1,b1) , Mod(a2,b2) ->
-          let cmp = phi0 a b in
+          let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
           let cmp = phi a1 a2 in
           if cmp <> 0 then cmp else phi b1 b2
       | Fun(f,xs) , Fun(g,ys) ->
-          let cmp = phi0 a b in
+          let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
           let cmp = Fun.compare f g in
           if cmp <> 0 then cmp else
@@ -424,7 +424,7 @@ struct
       | _ , Fun _ -> 1
 
       | Times(a1,x) , Times(a2,y) ->
-          let cmp = phi0 a b in
+          let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
           let cmp = Z.compare a1 a2 in
           if cmp <> 0 then cmp else phi x y
@@ -432,14 +432,14 @@ struct
       | _ , Times _ -> 1
 
       | Not x , Not y ->           
-          let cmp = phi0 a b in
+          let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
             phi x y
       | Not _ , _ -> (-1)
       |  _ , Not _ -> 1
 
       | Imply(h1,p1) , Imply(h2,p2) ->
-          let cmp = phi0 a b in
+          let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
           Hcons.compare_list phi (p1::h1) (p2::h2)
       | Imply _ , _ -> (-1)
@@ -449,7 +449,7 @@ struct
       | Mul xs , Mul ys
       | And xs , And ys
       | Or xs , Or ys ->           
-          let cmp = phi0 a b in
+          let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
             Hcons.compare_list phi xs ys
               
@@ -467,7 +467,7 @@ struct
       |  _ , Mod _ -> 1
 
       | If(a1,b1,c1) , If(a2,b2,c2) ->
-          let cmp = phi0 a b in
+          let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
           let cmp = phi a1 a2 in
           if cmp <> 0 then cmp else
@@ -477,7 +477,7 @@ struct
       |  _ , If _ -> 1
 
       | Aget(a1,b1) , Aget(a2,b2) ->
-          let cmp = phi0 a b in
+          let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
           let cmp = phi a1 a2 in
           if cmp <> 0 then cmp else phi b1 b2
@@ -485,7 +485,7 @@ struct
       |  _ , Aget _ -> 1
 
       | Aset(a1,k1,v1) , Aset(a2,k2,v2) ->
-          let cmp = phi0 a b in
+          let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
           let cmp = phi a1 a2 in
           if cmp <> 0 then cmp else
@@ -495,7 +495,7 @@ struct
       |  _ , Aset _ -> 1
 
       | Rget(r1,f1) , Rget(r2,f2) ->
-          let cmp = phi0 a b in
+          let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
           let cmp = phi r1 r2 in
           if cmp <> 0 then cmp else Field.compare f1 f2
@@ -503,21 +503,21 @@ struct
       |  _ , Rget _ -> 1
 
       | Rdef fxs , Rdef gys ->
-          let cmp = phi0 a b in
+          let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
           Hcons.compare_list (cmp_field phi) fxs gys
       | Rdef _ , _ -> (-1)
       |  _ , Rdef _ -> 1
 
       | Apply(a,xs) , Apply(b,ys) ->
-          let cmp = phi0 a b in
+          let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
           Hcons.compare_list phi (a::xs) (b::ys)
       | Apply _ , _ -> (-1)
       | _ , Apply _ -> 1
 
       | Bind(q1,t1,p1) , Bind(q2,t2,p2) ->
-          let cmp = phi0 a b in
+          let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
           let cmp = cmp_bind q1 q2 in
           if cmp <> 0 then cmp else
@@ -527,7 +527,7 @@ struct
 
     let rec compare a b =
       if a == b then 0 else
-        cmp_struct cmp_size compare a b
+        cmp_struct compare a b
 
   end
 
