@@ -1280,8 +1280,7 @@ struct
             | ts -> c_imply ts b
           end
     | _ ->
-        let c = e_not b in
-        if c == a then b else c_imply [a] b
+        if a == e_not b then b else c_imply [a] b
 
   type structural =
     | S_equal        (* equal constants or constructors *)
@@ -1456,22 +1455,15 @@ struct
   let e_imply hs p =
     match p.repr with
     | True -> e_true
-    | Imply(hs_sorted,p) -> begin 
-        (* (hs ==> hs_sorted ==> p) <==> (hs_sorted ==> hs ==> p) *)
-        let hs_implies_p = implication (e_and hs) p in
-        match hs_implies_p.repr with
-        | True -> e_true
-        | Imply(hs,p) -> begin try 
-              (* (hs_sorted ==> hs ==> p) <==> (hs_sorted && hs ==> p) *)
-              let hs_sorted_and_hs = fold_and hs_sorted hs in
-              let hs_sorted_and_hs = List.sort_uniq compare hs_sorted_and_hs in
-              check_absorbant hs_sorted_and_hs;
-              c_imply hs_sorted_and_hs p
-            with | Absorbant -> e_true
-          end
-        | _ -> (* hs_sorted ==> hs ==> p *)
-            implication (c_and hs_sorted) hs_implies_p
-      end
+    | Imply(hs0,p) ->
+        begin
+          try
+            let hs = fold_and hs0 hs in
+            let hs = List.sort_uniq compare hs in
+            check_absorbant hs ;
+            implication (c_and hs) p
+          with Absorbant -> e_true
+        end
     | _ -> implication (e_and hs) p
 
   let () = cached_not := function
