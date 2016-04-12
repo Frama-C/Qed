@@ -354,6 +354,19 @@ struct
     | _ -> false
 
   (* -------------------------------------------------------------------------- *)
+  (* --- Recursion Breakers                                                 --- *)
+  (* -------------------------------------------------------------------------- *)
+
+  let cached_not = ref (fun _ -> assert false)
+  let extern_not = ref (fun _ -> assert false)
+  let extern_ite = ref (fun _ -> assert false)
+  let extern_eq = ref (fun _ -> assert false)
+  let extern_neq = ref (fun _ -> assert false)
+  let extern_leq = ref (fun _ -> assert false)
+  let extern_lt = ref (fun _ -> assert false)
+  let extern_fun = ref (fun _ -> assert false)
+
+  (* -------------------------------------------------------------------------- *)
   (* --- Comparison                                                         --- *)
   (* -------------------------------------------------------------------------- *)
 
@@ -534,7 +547,6 @@ struct
   let weigth e = e.size
   let atom_min a b = if 0 < COMPARE.compare a b then b else a
 
-  let extern_not = ref (fun _ -> assert false)
   let compare a b =
     if a == b then 0 else
       let a' = if is_prop a then !extern_not a else a in
@@ -825,14 +837,6 @@ struct
                        | _ -> raise Not_found))
     | _ -> (match b.repr with | Fun(g,_) -> simplify g b a | _ -> raise Not_found)
 
-
-  let cached_not = ref (fun _ -> assert false)
-  let extern_ite = ref (fun _ -> assert false)
-  let extern_eq = ref (fun _ -> assert false)
-  let extern_neq = ref (fun _ -> assert false)
-  let extern_leq = ref (fun _ -> assert false)
-  let extern_lt = ref (fun _ -> assert false)
-  let extern_fun = ref (fun _ -> assert false)
 
   let builtin_cmp cmp a b =
     try
