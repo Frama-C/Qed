@@ -735,18 +735,18 @@ struct
     | [x] -> x
     | xs -> insert(And(xs))
 
-  let c_and xs = c_and_sorted (List.sort_uniq compare xs)
+  let _c_and xs = c_and_sorted (List.sort_uniq compare xs)
 
   let c_or_sorted = function
     | [] -> e_false
     | [x] -> x
     | xs -> insert(Or(xs))
 
-  let c_or xs = c_or_sorted (List.sort_uniq compare xs)
+  let _c_or xs = c_or_sorted (List.sort_uniq compare xs)
 
   let c_imply_sorted hs p = insert(Imply(hs,p))
 
-  let c_imply hs = c_imply_sorted (List.sort_uniq compare hs)
+  let _c_imply hs = c_imply_sorted (List.sort_uniq compare hs)
 
   let c_not x = insert(Not x)
 
@@ -1272,6 +1272,7 @@ struct
     | _ , True -> e_true
     | _ , False -> e_not a
     | Not p , Not q -> implication q p
+    | _  when a == b -> e_true
     | And ts , _ ->
         if List.memq b ts then e_true else
           let c = e_not b in
@@ -1281,9 +1282,8 @@ struct
             | ts -> c_imply_sorted ts b
           end
     | _ ->
-        if a == b then e_true else
-          let c = e_not b in
-          if c == a then b else c_imply_sorted [a] b
+        let c = e_not b in
+        if c == a then b else c_imply_sorted [a] b
 
   type structural =
     | S_equal        (* equal constants or constructors *)
