@@ -1350,6 +1350,48 @@ struct
   and implication_false hs =
     e_not (c_and hs)
 
+  let rec consequence_aux hs x = match x.repr with
+    | And xs -> begin try 
+          match consequence_gen true hs xs with
+          | [] -> e_true
+          | [x] -> consequence_aux hs x
+          | hs -> if hs==xs then x else c_and hs
+        with Absorbant -> e_false
+      end
+    | Or xs -> begin try 
+          match consequence_gen true hs xs with
+          | [] -> e_false
+          | [x] -> consequence_aux hs x
+          | hs -> if hs==xs then x else c_or hs
+        with Absorbant -> e_true
+      end
+    | Not x -> e_not (consequence_aux hs x)
+    | Imply (xs, b) -> begin
+        let b' = consequence_aux hs b in
+        match b'.repr with
+        | True -> b'
+        | _ -> begin try
+              let xs' = consequence_gen true hs xs in
+              match b==b', xs==xs', xs' with
+              | true,  true,  _  -> x
+              | _,     false, [] -> b'
+              | true,  false, _  -> c_imply xs' b'
+              | false, _,     _  -> implication xs' b'
+           with Absorbant -> e_false
+          end
+       end
+    | _ -> x
+      
+  let rec consequence h x = 
+    let not_x = e_not x in
+    match h.repr with
+    | True -> x
+    | False -> (* what_ever *) x
+    | _ when h == x     -> e_true
+    | _ when h == not_x -> e_false
+    | And hs -> consequence_aux hs x
+    | _      -> consequence_aux [h] x
+
   type structural =
     | S_equal        (* equal constants or constructors *)
     | S_disequal     (* different constants or constructors *)
