@@ -542,17 +542,29 @@ struct
       if a == b then 0 else
         cmp_struct compare a b
 
+    (* [steadily_gt a b] implies [0 < compare a b] *)
+    let steadily_gt a b =
+      let rec cmp a b =
+        if a == b then 0 else
+          cmp_struct (fun _ _ -> -1) a b
+      in 0 < cmp_struct cmp a b
   end
 
   let weigth e = e.size
   let atom_min a b = if 0 < COMPARE.compare a b then b else a
+  let atom_max a b = if 0 > COMPARE.compare a b then b else a
 
-  let compare a b =
-    if a == b then 0 else
+  let compare_gen cmp idem a b =
+    if a == b then idem else
       let a' = if is_prop a then !extern_not a else a in
       let b' = if is_prop b then !extern_not b else b in
-      if a == b' || a' == b then COMPARE.compare a b
-      else COMPARE.compare (atom_min a a') (atom_min b b')
+      if a == b' || a' == b then cmp a b
+      else cmp (atom_min a a') (atom_min b b')
+
+  let compare     = compare_gen COMPARE.compare     0
+
+  (* [steadily_gt a b] implies [0 < compare a b] *)
+  let steadily_gt = compare_gen COMPARE.steadily_gt false
 
   (* -------------------------------------------------------------------------- *)
   (* ---  Hconsed                                                           --- *)
@@ -752,7 +764,9 @@ struct
     | [x] -> x
     | xs -> insert(Or(xs))
 
-  let c_imply hs p = insert(Imply(hs,p))
+  let c_imply hs p = match hs with
+    | [] -> p
+    | hs -> insert(Imply(hs,p))
 
   let c_not x = insert(Not x)
 
@@ -1263,24 +1277,91 @@ struct
       c_or ms
     with Absorbant -> e_true
 
-  let rec implication a b =
+  let order_elt v not_v = v, not_v, atom_max v not_v
+
+  let consequence_elt (e,not_e,max_e) ts = 
+    let rec clean (modified,rev) = function
+      | [] -> modified, if modified then List.rev rev else ts
+      | x::_   when x == not_e -> raise Absorbant
+      | x::xs  when x == e     -> clean (true,rev) xs
+      | (x::_ as xs) when steadily_gt x max_e -> 
+          modified, if modified then List.rev_append rev xs else ts
+      | x::xs -> clean (modified,x::rev) xs
+    in clean (false,[]) ts
+   
+  (* requires two sorted [term list] 
+     returns [ts'] such that 
+     when pol=true:  - [e_and hs] ==> ([e_and ts] <==> [e_and ts'])
+                       raise Absorbant -> ts'=e_false 
+     when pol=false: - [e_and hs] ==> ([e_or  ts] <==> [e_or  ts'])
+                       raise Absorbant -> ts'=e_e_true *)
+  let consequence_gen pol hs xs = 
+    let elt e = if pol then order_elt e (e_not e) else order_elt (e_not e) e in
+    let rec clean (modified,rev,revs) hs ts = match hs, ts with 
+      | _, []
+      | [], _ -> 
+          if modified then List.fold_left (fun acc rev -> List.rev_append rev acc) [] (ts::rev::revs) 
+          else xs
+      | e::es, x::xs ->
+          if steadily_gt e (atom_max x (e_not x)) then
+            clean (modified,x::rev,revs) hs xs
+          else begin
+            let modif,remains = consequence_elt (elt e) ts in
+            clean (modified||modif,[],(if rev<>[] then rev::revs else revs)) es remains
+          end
+    in clean (false,[],[]) hs xs
+          
+  let rec implication hs b =
+    match hs with
+    | [] -> b
+    | a::[] -> implication1 a b
+    | _ -> implication2 true hs b
+  and implication1 a b =
     match a.repr , b.repr with
     | True , _ -> b
     | False , _ -> e_true
     | _ , True -> e_true
     | _ , False -> e_not a
-    | Not p , Not q -> implication q p
+    | Not p , Not q -> implication1 q p
     | _  when a == b -> e_true
-    | And ts , _ ->
-        if List.memq b ts then e_true else
-          let c = e_not b in
-          begin
-            match List.filter (fun t -> t != c) ts with
-            | [] -> b
-            | ts -> c_imply ts b
-          end
-    | _ ->
-        if a == e_not b then b else c_imply [a] b
+    | _  when a == e_not b -> b
+    | _, Imply _ | _, Or _ | _, And _ -> implication2 true  [a] b 
+    | _ -> c_imply [a] b
+  and implication2 first hs b =
+    match b.repr with
+    | And bs -> begin 
+        try 
+          match consequence_gen true hs bs with
+          | [] -> e_true 
+          | b::[] -> implication2 false hs b
+          | bs' -> c_imply hs (if bs'==bs then b else c_and bs')
+        with Absorbant -> implication_false hs
+      end
+    | Or bs -> if List.memq b hs then e_true else begin
+        try 
+          match consequence_gen false hs bs with
+          | [] -> implication_false hs 
+          | b::[] -> implication2 false hs b
+          | bs' -> c_imply hs (if bs'==bs then b else c_or bs')
+        with Absorbant -> e_true
+      end
+    | Imply(hs0,b0) -> implication_imply hs b hs0 b0
+    | _ when first -> begin 
+        try
+          match consequence_gen true hs [b] with
+          | [] -> e_true 
+          | _ -> c_imply hs b
+        with Absorbant -> implication_false hs
+      end
+    | _ -> c_imply hs b
+  and implication_imply hs _b hs0 b0 =
+    (* TODO: optimization *)
+      let hs = List.sort_uniq compare (hs@hs0) in
+      try check_absorbant hs ;
+        implication2 true hs b0
+      with Absorbant -> e_true 
+  and implication_false hs =
+   e_not (c_and hs)
 
   type structural =
     | S_equal        (* equal constants or constructors *)
@@ -1455,18 +1536,13 @@ struct
   let e_imply hs p =
     match p.repr with
     | True -> e_true
-    | Imply(hs0,p) ->
-        begin
-          try
-            if List.memq p hs then raise Absorbant ;
-            let hs = fold_and hs0 hs in
-            let hs = List.sort_uniq compare hs in
-            check_absorbant hs ;
-            c_imply hs p
-          with Absorbant -> e_true
-        end
-    | _ ->
-        implication (e_and hs) p
+    | _ -> 
+        try
+          let hs = fold_and [] hs in
+          let hs = List.sort_uniq compare hs in
+          check_absorbant hs ;
+          implication hs p ;
+        with Absorbant -> e_true
 
   let () = cached_not := function
       | And xs -> e_or (List.map e_not xs)
