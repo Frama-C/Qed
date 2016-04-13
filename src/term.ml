@@ -1311,57 +1311,44 @@ struct
           end
     in clean (false,[],[]) hs xs
           
-  let rec implication hs b =
-    match hs with
-    | [] -> b
-    | a::[] -> implication1 a b
-    | _ -> implication2 true hs b
-  and implication1 a b =
-    match a.repr , b.repr with
-    | True , _ -> b
-    | False , _ -> e_true
-    | _ , True -> e_true
-    | _ , False -> e_not a
-    | Not p , Not q -> implication1 q p
-    | _  when a == b -> e_true
-    | _  when a == e_not b -> b
-    | _, Imply _ | _, Or _ | _, And _ -> implication2 true  [a] b 
-    | _ -> c_imply [a] b
-  and implication2 first hs b =
-    match b.repr with
-    | And bs -> begin 
-        try 
-          match consequence_gen true hs bs with
-          | [] -> e_true 
-          | b::[] -> implication2 false hs b
-          | bs' -> c_imply hs (if bs'==bs then b else c_and bs')
-        with Absorbant -> implication_false hs
-      end
-    | Or bs -> if List.memq b hs then e_true else begin
-        try 
-          match consequence_gen false hs bs with
-          | [] -> implication_false hs 
-          | b::[] -> implication2 false hs b
-          | bs' -> c_imply hs (if bs'==bs then b else c_or bs')
-        with Absorbant -> e_true
-      end
+  let merge hs hs0 = List.sort_uniq compare (hs@hs0)
+                     
+  let rec implication hs b = match b.repr with
     | Imply(hs0,b0) -> implication_imply hs b hs0 b0
-    | _ when first -> begin 
-        try
-          match consequence_gen true hs [b] with
-          | [] -> e_true 
-          | _ -> c_imply hs b
-        with Absorbant -> implication_false hs
-      end
+    | And bs -> implication_and [] hs b bs
+    | Or bs  -> implication_or  [] hs b bs
     | _ -> c_imply hs b
-  and implication_imply hs _b hs0 b0 =
-    (* TODO: optimization *)
-      let hs = List.sort_uniq compare (hs@hs0) in
+  and implication_and hs0 hs b0 bs = try 
+      match consequence_gen true hs bs with
+      | []  -> e_true (* [And hs] implies [b0] *)
+      | [b] -> implication (merge hs0 hs) b
+      | bs' -> c_imply (merge hs0 hs) (if bs'==bs then b0 else c_and bs')
+    with Absorbant -> implication_false (merge hs0 hs) (* [And hs] implies [Not b0] *)
+  and implication_or hs0 hs b0 bs = try 
+      match consequence_gen false hs bs with
+      | []  -> implication_false (merge hs0 hs) (* [And hs] implies [Not b0] *)
+      | [b] -> implication (merge hs0 hs) b
+      | bs' -> c_imply (merge hs0 hs) (if bs'==bs then b0 else c_or bs')
+    with Absorbant -> e_true (* [And hs] implies [b] *)
+  and implication_imply hs b hs0 b0 = try 
+      match consequence_gen true hs [b0] with
+      | [] -> e_true (* [And hs] implies [b0] *)
+      | _ -> try
+            match consequence_gen true hs0 hs with
+            | [] -> b (* [And hs0] implies [And hs] *)
+            | hs ->
+                match b0.repr with
+                | And bs -> implication_and hs0 hs b0 bs
+                | Or bs  -> implication_or  hs0 hs b0 bs
+                | _ -> c_imply (merge hs0 hs) b0
+          with Absorbant -> e_true (* [False = And (hs@hs0)] *)
+    with Absorbant -> (* [And hs] implies [Not b0] *)
+      let hs = merge hs hs0 in
       try check_absorbant hs ;
-        implication2 true hs b0
-      with Absorbant -> e_true 
+        implication_false hs
+      with Absorbant -> e_true  (* [False = And (hs@hs0)] *)
   and implication_false hs =
-   e_not (c_and hs)
+    e_not (c_and hs)
 
   type structural =
     | S_equal        (* equal constants or constructors *)
@@ -1533,6 +1520,27 @@ struct
     | [t] -> t
     | ts -> conjunction ts
 
+  let rec imply1 a b =
+    match a.repr , b.repr with
+    | _ , False -> e_not a
+    | Not p , Not q -> imply1 q p
+    | _  when a == b -> e_true
+    | _  when a == e_not b -> b
+    | _, _ -> implication [a] b
+                
+  let imply2 hs b =
+    match b.repr with
+    | And bs -> implication_and [] hs b bs
+    | _ -> try
+          match consequence_gen true hs [b] with
+          | [] -> e_true (* [And hs] implies [b] *)
+          | _  -> 
+              match b.repr with
+              | Or bs -> implication_or [] hs b bs
+              | Imply(hs0,b0) -> implication_imply hs b hs0 b0
+              | _ -> c_imply hs b
+        with Absorbant -> implication_false hs (* [And hs] implies [Not b] *)
+
   let e_imply hs p =
     match p.repr with
     | True -> e_true
@@ -1541,9 +1549,12 @@ struct
           let hs = fold_and [] hs in
           let hs = List.sort_uniq compare hs in
           check_absorbant hs ;
-          implication hs p ;
+          match hs with
+          | []  -> p
+          | [a] -> imply1 a p
+          | _   -> imply2 hs p
         with Absorbant -> e_true
-
+          
   let () = cached_not := function
       | And xs -> e_or (List.map e_not xs)
       | Or  xs -> e_and (List.map e_not xs)
