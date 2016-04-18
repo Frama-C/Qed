@@ -554,17 +554,15 @@ struct
   let atom_min a b = if 0 < COMPARE.compare a b then b else a
   let atom_max a b = if 0 > COMPARE.compare a b then b else a
 
-  let compare_gen cmp idem a b =
-    if a == b then idem else
+  let compare a b =
+    if a == b then 0 else
       let a' = if is_prop a then !extern_not a else a in
       let b' = if is_prop b then !extern_not b else b in
-      if a == b' || a' == b then cmp a b
-      else cmp (atom_min a a') (atom_min b b')
+      if a == b' || a' == b
+      then COMPARE.compare a b
+      else COMPARE.compare (atom_min a a') (atom_min b b')
 
-  let compare     = compare_gen COMPARE.compare     0
-
-  (* [steadily_gt a b] implies [0 < compare a b] *)
-  let steadily_gt = compare_gen COMPARE.steadily_gt false
+  let steadily_gt a b = 0 < compare a b
 
   (* -------------------------------------------------------------------------- *)
   (* ---  Hconsed                                                           --- *)
