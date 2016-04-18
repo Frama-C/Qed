@@ -542,12 +542,6 @@ struct
       if a == b then 0 else
         cmp_struct compare a b
 
-    (* [steadily_gt a b] implies [0 < compare a b] *)
-    let steadily_gt a b =
-      let rec cmp a b =
-        if a == b then 0 else
-          cmp_struct (fun _ _ -> -1) a b
-      in 0 < cmp_struct cmp a b
   end
 
   let weigth e = e.size
@@ -555,14 +549,13 @@ struct
   let atom_max a b = if 0 > COMPARE.compare a b then b else a
 
   let compare a b =
-    if a == b then 0 else
+    if a == b then 0
+    else
       let a' = if is_prop a then !extern_not a else a in
       let b' = if is_prop b then !extern_not b else b in
       if a == b' || a' == b
       then COMPARE.compare a b
       else COMPARE.compare (atom_min a a') (atom_min b b')
-
-  let steadily_gt a b = 0 < compare a b
 
   (* -------------------------------------------------------------------------- *)
   (* ---  Hconsed                                                           --- *)
@@ -1275,39 +1268,37 @@ struct
       c_or ms
     with Absorbant -> e_true
 
-  let order_elt v not_v = v, not_v, atom_max v not_v
+  let rec consequence_and hs ts =
+    match hs with
+    | [] -> ts
+    | h :: hws -> consequence_and1 h (e_not h) hws ts
 
-  let consequence_elt (e,not_e,max_e) ts = 
-    let rec clean (modified,rev) = function
-      | [] -> modified, if modified then List.rev rev else ts
-      | x::_   when x == not_e -> raise Absorbant
-      | x::xs  when x == e     -> clean (true,rev) xs
-      | (x::_ as xs) when steadily_gt x max_e -> 
-          modified, if modified then List.rev_append rev xs else ts
-      | x::xs -> clean (modified,x::rev) xs
-    in clean (false,[]) ts
-   
-  (* requires two sorted [term list] 
-     returns [ts'] such that 
-     when pol=true:  - [e_and hs] ==> ([e_and ts] <==> [e_and ts'])
-                       raise Absorbant -> ts'=e_false 
-     when pol=false: - [e_and hs] ==> ([e_or  ts] <==> [e_or  ts'])
-                       raise Absorbant -> ts'=e_e_true *)
-  let consequence_gen pol hs xs = 
-    let elt e = if pol then order_elt e (e_not e) else order_elt (e_not e) e in
-    let rec clean (modified,rev,revs) hs ts = match hs, ts with 
-      | _, []
-      | [], _ -> 
-          if modified then List.fold_left (fun acc rev -> List.rev_append rev acc) [] (ts::rev::revs) 
-          else xs
-      | e::es, x::xs ->
-          if steadily_gt e (atom_max x (e_not x)) then
-            clean (modified,x::rev,revs) hs xs
-          else begin
-            let modif,remains = consequence_elt (elt e) ts in
-            clean (modified||modif,[],(if rev<>[] then rev::revs else revs)) es remains
-          end
-    in clean (false,[],[]) hs xs
+  and consequence_and1 h nh hws ts = (* nh == not h *)
+    match ts with
+    | [] -> []
+    | t::tws ->
+        if nh == t then raise Absorbant ;
+        (* otherwise remove h and hws from ts *)
+        let cmp = compare h t in
+        if cmp < 0 then consequence_and hws ts else
+        if cmp > 0 then t :: consequence_and1 h nh hws tws else
+          consequence_and hws tws
+
+  let rec consequence_or hs ts =
+    match hs with
+    | [] -> ts
+    | h :: hws -> consequence_or1 h (e_not h) hws ts
+
+  and consequence_or1 h nh hws ts = (* nh == not h *)
+    match ts with
+    | [] -> []
+    | t::tws ->
+        if h == t then raise Absorbant ;
+        (* otherwise remove (not h) and hs from ts *)
+        let cmp = compare nh t in
+        if cmp < 0 then consequence_or hws ts else
+        if cmp > 0 then t :: consequence_or1 h nh hws tws else
+          consequence_or hws tws
           
   let merge hs hs0 = List.sort_uniq compare (hs@hs0)
                      
@@ -1317,22 +1308,22 @@ struct
     | Or bs  -> implication_or  [] hs b bs
     | _ -> c_imply hs b
   and implication_and hs0 hs b0 bs = try 
-      match consequence_gen true hs bs with
+      match consequence_and hs bs with
       | []  -> e_true (* [And hs] implies [b0] *)
       | [b] -> implication (merge hs0 hs) b
       | bs' -> c_imply (merge hs0 hs) (if bs'==bs then b0 else c_and bs')
     with Absorbant -> implication_false (merge hs0 hs) (* [And hs] implies [Not b0] *)
   and implication_or hs0 hs b0 bs = try 
-      match consequence_gen false hs bs with
+      match consequence_or hs bs with
       | []  -> implication_false (merge hs0 hs) (* [And hs] implies [Not b0] *)
       | [b] -> implication (merge hs0 hs) b
       | bs' -> c_imply (merge hs0 hs) (if bs'==bs then b0 else c_or bs')
     with Absorbant -> e_true (* [And hs] implies [b] *)
   and implication_imply hs b hs0 b0 = try 
-      match consequence_gen true hs [b0] with
+      match consequence_and hs [b0] with
       | [] -> e_true (* [And hs] implies [b0] *)
       | _ -> try
-            match consequence_gen true hs0 hs with
+            match consequence_and hs0 hs with
             | [] -> b (* [And hs0] implies [And hs] *)
             | hs ->
                 match b0.repr with
@@ -1350,14 +1341,14 @@ struct
 
   let rec consequence_aux hs x = match x.repr with
     | And xs -> begin try 
-          match consequence_gen true hs xs with
+          match consequence_and hs xs with
           | [] -> e_true
           | [x] -> consequence_aux hs x
           | hs -> if hs==xs then x else c_and hs
         with Absorbant -> e_false
       end
     | Or xs -> begin try 
-          match consequence_gen true hs xs with
+          match consequence_and hs xs with
           | [] -> e_false
           | [x] -> consequence_aux hs x
           | hs -> if hs==xs then x else c_or hs
@@ -1369,7 +1360,7 @@ struct
         match b'.repr with
         | True -> b'
         | _ -> begin try
-              let xs' = consequence_gen true hs xs in
+              let xs' = consequence_and hs xs in
               match b==b', xs==xs', xs' with
               | true,  true,  _  -> x
               | _,     false, [] -> b'
@@ -1572,7 +1563,7 @@ struct
     match b.repr with
     | And bs -> implication_and [] hs b bs
     | _ -> try
-          match consequence_gen true hs [b] with
+          match consequence_and hs [b] with
           | [] -> e_true (* [And hs] implies [b] *)
           | _  -> 
               match b.repr with
