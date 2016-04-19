@@ -1268,37 +1268,48 @@ struct
       c_or ms
     with Absorbant -> e_true
 
-  let rec consequence_and hs ts =
-    match hs with
-    | [] -> ts
-    | h :: hws -> consequence_and1 h (e_not h) hws ts
-
-  and consequence_and1 h nh hws ts = (* nh == not h *)
-    match ts with
-    | [] -> []
-    | t::tws ->
-        if nh == t then raise Absorbant ;
-        (* otherwise remove h and hws from ts *)
-        let cmp = compare h t in
-        if cmp < 0 then consequence_and hws ts else
-        if cmp > 0 then t :: consequence_and1 h nh hws tws else
-          consequence_and hws tws
-
-  let rec consequence_or hs ts =
-    match hs with
-    | [] -> ts
-    | h :: hws -> consequence_or1 h (e_not h) hws ts
-
-  and consequence_or1 h nh hws ts = (* nh == not h *)
-    match ts with
-    | [] -> []
-    | t::tws ->
+  let consequence_and hs ts =
+    let rec consequence_and0 modif hs ts =
+      match hs with
+      | [] -> modif, ts
+      | h :: hws -> consequence_and1 modif h (e_not h) hws ts
+    and consequence_and1 modif h nh hws ts = (* nh == not h *)
+      match ts with
+      | [] -> modif,[]
+      | t::tws ->
+          if nh == t then raise Absorbant ;
+          (* otherwise remove h and hws from ts *)
+          let cmp = compare h t in
+          if cmp < 0 then consequence_and0 modif hws ts else
+          if cmp > 0 then 
+            (let modif, ts = consequence_and1 modif h nh hws tws in
+             modif, t::ts) else
+            consequence_and0 true hws tws
+    in
+    let modif,ts' = consequence_and0 false hs ts in
+    if modif then ts' else ts
+            
+  let consequence_or hs ts =
+    let rec consequence_or0 modif hs ts =
+      match hs with
+      | [] -> modif, ts
+      | h :: hws -> consequence_or1 modif h (e_not h) hws ts
+                      
+    and consequence_or1 modif h nh hws ts = (* nh == not h *)
+      match ts with
+      | [] -> modif, []
+      | t::tws ->
         if h == t then raise Absorbant ;
         (* otherwise remove (not h) and hs from ts *)
         let cmp = compare nh t in
-        if cmp < 0 then consequence_or hws ts else
-        if cmp > 0 then t :: consequence_or1 h nh hws tws else
-          consequence_or hws tws
+        if cmp < 0 then consequence_or0 modif hws ts else
+        if cmp > 0 then 
+          (let modif, ts = consequence_or1 modif h nh hws tws in
+           modif, t::ts) else
+          consequence_or0 true hws tws
+    in
+    let modif,ts' = consequence_or0 false hs ts in
+    if modif then ts' else ts
           
   let merge hs hs0 = List.sort_uniq compare (hs@hs0)
                      
