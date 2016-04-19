@@ -1268,48 +1268,42 @@ struct
       c_or ms
     with Absorbant -> e_true
 
-  let consequence_and hs ts =
-    let rec consequence_and0 modif hs ts =
+  module Consequence =
+  struct
+    type p = CONJ | DISJ
+    type t = { mutable modif : bool ; polarity : p }
+
+    let mark w = w.modif <- true ; w
+    
+    let rec gen w hs ts =
       match hs with
-      | [] -> modif, ts
-      | h :: hws -> consequence_and1 modif h (e_not h) hws ts
-    and consequence_and1 modif h nh hws ts = (* nh == not h *)
+      | [] -> ts
+      | h :: hws ->
+          match w.polarity with
+          | CONJ -> aux w ~absorb:(e_not h) ~filter:h hws ts
+          | DISJ -> aux w ~absorb:h ~filter:(e_not h) hws ts
+
+    and aux w ~absorb ~filter hws ts =
       match ts with
-      | [] -> modif,[]
-      | t::tws ->
-          if nh == t then raise Absorbant ;
-          (* otherwise remove h and hws from ts *)
-          let cmp = compare h t in
-          if cmp < 0 then consequence_and0 modif hws ts else
-          if cmp > 0 then 
-            (let modif, ts = consequence_and1 modif h nh hws tws in
-             modif, t::ts) else
-            consequence_and0 true hws tws
-    in
-    let modif,ts' = consequence_and0 false hs ts in
-    if modif then ts' else ts
-            
-  let consequence_or hs ts =
-    let rec consequence_or0 modif hs ts =
-      match hs with
-      | [] -> modif, ts
-      | h :: hws -> consequence_or1 modif h (e_not h) hws ts
-                      
-    and consequence_or1 modif h nh hws ts = (* nh == not h *)
-      match ts with
-      | [] -> modif, []
-      | t::tws ->
-        if h == t then raise Absorbant ;
-        (* otherwise remove (not h) and hs from ts *)
-        let cmp = compare nh t in
-        if cmp < 0 then consequence_or0 modif hws ts else
-        if cmp > 0 then 
-          (let modif, ts = consequence_or1 modif h nh hws tws in
-           modif, t::ts) else
-          consequence_or0 true hws tws
-    in
-    let modif,ts' = consequence_or0 false hs ts in
-    if modif then ts' else ts
+      | [] -> ts
+      | t :: tws ->
+          if absorb == t then raise Absorbant ;
+          let cmp = compare filter t in
+          if cmp < 0
+          then gen w hws ts else
+          if cmp > 0
+          then t :: aux (mark w) ~absorb ~filter hws tws
+          else gen (mark w) hws tws
+
+    let filter polarity hs ts =
+      let w = { modif = false ; polarity } in
+      let ws = gen w hs ts in
+      if w.modif then ws else ts
+    
+  end
+  
+  let consequence_and = Consequence.(filter CONJ)
+  let consequence_or  = Consequence.(filter DISJ)
           
   let merge hs hs0 = List.sort_uniq compare (hs@hs0)
                      
