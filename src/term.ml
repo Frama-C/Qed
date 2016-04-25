@@ -1138,7 +1138,7 @@ struct
         if Z.equal r Z.zero
         then e_times q e
         else c_div a b
-    | Kint k , Kint k' when not (Z.equal k' Z.zero) -> e_zint (Z.acsl_div k k')
+    | Kint k , Kint k' when not (Z.equal k' Z.zero) -> e_zint (Z.div k k')
     | _ -> c_div a b
 
   let e_mod a b =
@@ -1150,7 +1150,7 @@ struct
         if Z.equal r Z.zero
         then e_zero
         else c_mod (e_times r e) b
-    | Kint k , Kint k' when not (Z.equal k' Z.zero) -> e_zint (Z.acsl_rem k k')
+    | Kint k , Kint k' when not (Z.equal k' Z.zero) -> e_zint (Z.rem k k')
     | _ -> c_mod a b
 
   (* --- Comparisons --- *)
