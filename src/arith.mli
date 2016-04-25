@@ -39,9 +39,13 @@ sig
   val sub : t -> t -> t
   val mul : t -> t -> t
 
-  val div : t -> t -> t
-  val rem : t -> t -> t
-  val div_rem : t -> t -> t * t
+  val div : t -> t -> t (* euclidian division  *)
+  val rem : t -> t -> t (* euclidian remainder *)
+  val div_rem : t -> t -> t * t   (* euclidian *)
+
+  val acsl_div : t -> t -> t (* acsl division  *)
+  val acsl_rem : t -> t -> t (* acsl remainder *)
+  val acsl_div_rem : t -> t -> t * t   (* acsl *)
 
   val equal : t -> t -> bool
 
