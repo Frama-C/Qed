@@ -1131,8 +1131,8 @@ struct
 
   let e_div a b =
     match a.repr , b.repr with
-    | Kint z , _ when Z.equal z Z.zero -> e_zero
     | _ , Kint z when Z.equal z Z.one -> a
+    | _ , Kint z when Z.equal z Z.minus_one -> times Z.minus_one a
     | Times(k,e) , Kint k' when not (Z.equal k' Z.zero) ->
         let q,r = Z.div_rem k k' in
         if Z.equal r Z.zero
@@ -1143,7 +1143,6 @@ struct
 
   let e_mod a b =
     match a.repr , b.repr with
-    | Kint z , _ when Z.equal z Z.zero -> e_zero
     | _ , Kint z when Z.equal z Z.one -> e_zero
     | Times(k,e) , Kint k' when not (Z.equal k' Z.zero) ->
         let r = Z.rem k k' in
