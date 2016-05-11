@@ -181,8 +181,7 @@ sig
 
   type var = Var.t
   type tau = (Field.t,ADT.t) datatype
-  type signature = (Field.t,ADT.t) funtype
-
+  
   module Tau : Data with type t = tau
   module Vars : Idxset.S with type elt = var
   module Vmap : Idxmap.S with type key = var
@@ -305,6 +304,21 @@ sig
   val lc_map : (term -> term) -> term -> term
   val lc_iter : (term -> unit) -> term -> unit
 
+  (** {3 Partial Typing} *)
+
+  (** Try to extract a type of term.
+      Parameterized by optional extractors for field and functions.
+      Extractors may raise [Not_found] ; however, they are only used when
+      the provided kinds for fields and functions are not precise enough.
+      @field type of a field value
+      @record type of the record containing a field
+      @call type of the values returned by the function
+      @raise [Not_found] if no type is found. *)
+  val typeof :
+    ?field:(Field.t -> tau) ->
+    ?record:(Field.t -> tau) ->
+    ?call:(Fun.t -> tau) -> term -> tau
+  
   (** {3 Support for Builtins} *)
 
   val set_builtin : Fun.t -> (term list -> term) -> unit

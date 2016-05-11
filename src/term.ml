@@ -2186,4 +2186,78 @@ struct
     List.iter (mark m) es ;
     defs m
 
+  (* -------------------------------------------------------------------------- *)
+  (* --- Typing                                                             --- *)
+  (* -------------------------------------------------------------------------- *)
+
+  let tau_of_sort = function
+    | Sint -> Int
+    | Sreal -> Real
+    | Sbool -> Bool
+    | Sprop | Sdata | Sarray _ -> raise Not_found
+                                    
+  let tau_of_arraysort = function
+    | Sarray s -> tau_of_sort s
+    | _ -> raise Not_found
+
+  let tau_merge a b =
+    match a,b with
+    | Bool , Bool -> Bool
+    | (Bool|Prop) , (Bool|Prop) -> Prop
+    | Int , Int -> Int
+    | (Int|Real) , (Int|Real) -> Real
+    | _ -> raise Not_found
+             
+  let rec merge_list t f = function
+    | [] -> t
+    | e::es -> merge_list (tau_merge t (f e)) f es
+  
+  type env = {
+    field : Field.t -> tau ;
+    record : Field.t -> tau ;
+    call : Fun.t -> tau ;
+  }
+
+  let rec typecheck env e =
+    match e.sort with
+    | Sint -> Int
+    | Sreal -> Real
+    | Sbool -> Bool
+    | Sprop -> Prop
+    | Sdata | Sarray _ ->
+        match e.repr with
+        | Bvar (_,ty) -> ty
+        | Fvar x -> tau_of_var x
+        | Aset(m,k,v) ->
+            (try typecheck env m
+             with Not_found ->
+               Array(typecheck env k,typecheck env v))
+        | Fun(f,_) ->
+            (try tau_of_sort (Fun.sort f)
+             with Not_found -> env.call f)
+        | Aget(m,_) ->
+            (try match typecheck env m with
+               | Array(_,v) -> v
+               | _ -> raise Not_found
+             with Not_found -> tau_of_arraysort m.sort)
+        | Rdef [] -> raise Not_found
+        | Rdef ((f,_)::_) -> env.record f
+        | Rget (_,f) ->
+            (try tau_of_sort (Field.sort f)
+             with Not_found -> env.field f)
+        | True | False -> Bool
+        | Kint _ -> Int
+        | Kreal _ -> Real
+        | Times(_,e) -> typecheck env e
+        | Add es | Mul es -> merge_list Int (typecheck env) es
+        | Div (a,b) | Mod (a,b) | If(_,a,b) ->
+            tau_merge (typecheck env a) (typecheck env b)
+        | Eq _ | Neq _ | Leq _ | Lt _ | And _ | Or _ | Not _ | Imply _ -> Bool
+        | Bind((Forall|Exists),_,_) -> Prop
+        | Apply _ | Bind(Lambda,_,_) -> raise Not_found
+                 
+  let undefined _ = raise Not_found
+  let typeof ?(field=undefined) ?(record=undefined) ?(call=undefined) e =
+    typecheck { field ; record ; call } e
+  
 end
