@@ -561,8 +561,11 @@ struct
   let compare_raising_absorbant a b =
     if a == b then 0
     else
-      let a' = if is_prop a then (let na = !extern_not a in if na == b then raise Absorbant; na) else a in
-      let b' = if is_prop b then (let nb = !extern_not b in if nb == a then raise Absorbant; nb) else b in
+      let negate ~abs e =
+        let ne = !extern_not e in
+        if abs == ne then raise Absorbant ; ne in
+      let a' = if is_prop a then negate ~abs:b a else a in
+      let b' = if is_prop b then negate ~abs:a b else b in
       if a == b' || a' == b
       then COMPARE.compare a b
       else COMPARE.compare (atom_min a a') (atom_min b b')
