@@ -1,0 +1,55 @@
+
+theory Literal
+  use import bool.Bool
+
+  type a
+  function leq a a : bool
+  function is_prop a : bool
+  axiom refl : forall x. leq x x
+  axiom trans : forall x y z. leq x y -> leq y z -> leq x z
+  axiom antisym : forall x y. leq x y -> leq y x -> x = y
+
+  function n a : a
+  axiom npp : forall x. is_prop x -> is_prop (n x)
+  axiom inv : forall x. n (n x) = x
+
+  function lt (x y : a) : bool = leq x y /\ not (x = y)
+  function atom (x y : a) : a = if lt x y then y else x
+  
+  function compare (x y : a) : bool =
+    let nx = if is_prop x then n x else x in
+    let ny = if is_prop y then n y else y in
+    if x = ny || y = nx
+    then leq x y
+    else leq (atom x nx) (atom y ny)
+
+  lemma compare_refl : forall x. compare x x
+  lemma compare_trans : forall x y z. compare x y -> compare y z -> compare x z
+  lemma compare_antisym : forall x y. compare x y -> compare y x -> x = y
+
+  function conj (x y : a) : bool = (is_prop x && n x = y) || x = y
+
+  lemma conj_refl : forall x. conj x x
+  lemma conj_sym : forall x y. conj x y -> conj y x
+  lemma conj_trans : forall x y z. conj x y -> conj y z -> conj x z
+
+  lemma compare_literal : forall x y z.
+     compare x y -> compare y z -> conj x z -> (conj x y && conj y z)
+
+  axiom complete : forall x y. leq x y \/ leq y x
+
+  lemma compare_complete : forall x y. compare x y \/ compare y x
+
+  lemma compare_conj1 : forall x y.
+     is_prop x -> is_prop y -> x = n y -> (compare x y = compare (n y) (n x))
+
+  lemma compare_conj2 : forall x y.
+     is_prop x -> is_prop y -> x <> n y -> (compare x y = compare (n x) (n y))
+
+  function order (x y : a) : bool = compare x y /\ not (x = y) /\ not (x = n y)
+
+  lemma order_opp : forall x y. is_prop x -> is_prop y -> order x y -> order (n x) y
+
+  lemma order_conj : forall x y. is_prop x -> is_prop y -> order x y -> order (n x) (n y)
+
+end
