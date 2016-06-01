@@ -373,6 +373,13 @@ struct
   module COMPARE =
   struct
 
+    let fun_rank f =
+      match Fun.category f with
+      | Function -> 3
+      | Injection -> 2
+      | Constructor -> 1
+      | Operator _ -> 0
+    
     let cmp_size a b = Pervasives.compare a.size b.size
     let rank_bind = function Forall -> 0 | Exists -> 1 | Lambda -> 2
     let cmp_bind p q = rank_bind p - rank_bind q
@@ -418,11 +425,13 @@ struct
           let cmp = phi a1 a2 in
           if cmp <> 0 then cmp else phi b1 b2
       | Fun(f,xs) , Fun(g,ys) ->
-          let cmp = cmp_size a b in
+          let cmp = fun_rank f - fun_rank g in
           if cmp <> 0 then cmp else
-          let cmp = Fun.compare f g in
-          if cmp <> 0 then cmp else
-            Hcons.compare_list phi xs ys
+            let cmp = cmp_size a b in
+            if cmp <> 0 then cmp else
+              let cmp = Fun.compare f g in
+              if cmp <> 0 then cmp else
+                Hcons.compare_list phi xs ys
       | Fun (_,[]) , _ -> (-1)  (* (a) as a variable *)
       | _ , Fun (_,[]) -> 1
       | Eq _ , _ -> (-1)        (* (b) equality *)
@@ -736,7 +745,7 @@ struct
   let c_lt  x y = insert (Lt (x,y))
   let insert_eq  x y = insert (Eq (x,y))
   let insert_neq x y = insert (Neq(x,y))
-  let sym c x y = if compare x y > 0 then c y x else c x y
+  let sym c x y = if compare x y < 0 then c y x else c x y
   let compare_field (f,x) (g,y) =
     let cmp = Field.compare f g in
     if cmp = 0 then compare x y else cmp
