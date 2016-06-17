@@ -1,6 +1,15 @@
+Hcons
+Listset
+Listmap
+Intset
+Intmap
+Idxset
+Idxmap
+Mergemap
+Mergeset
+Collection
 Logic
 Term
-Sequent
 Pretty
 Export_altergo
 Export_coq

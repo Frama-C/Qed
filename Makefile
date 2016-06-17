@@ -23,7 +23,7 @@ FLAGS=  -use-ocamlfind $(JOBS) \
 	-cflags -w,PSUZL+7,-warn-error,PSUZL+7 \
 	-cflags -for-pack,$(NAME)
 
-TARGETS= src/$(PKG).cmo src/$(PKG).cmx src/$(PKG).cmxs
+TARGETS= src/$(PKG).cmo src/$(PKG).cmx
 
 build:
 	@echo "Build Qed."
@@ -39,7 +39,7 @@ doc:
 
 clean:
 	@echo "Cleaning"
-	@ocamlbuild clean
+	@ocamlbuild -clean
 
 headers:
 	headache -c licences/header.config -h licences/HEADER \

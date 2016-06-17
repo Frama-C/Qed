@@ -61,9 +61,9 @@ struct
         (** TODO: better uncapitalization of the first letter? utf8? *)
         let lower0 = Char.lowercase s.[0] in
         if String.length s > 0 &&  lower0 <> s.[0] then
-          let s = String.copy s in
-          s.[0] <- lower0;
-          s
+          let s = Bytes.of_string s in
+          Bytes.set s 0 lower0 ;
+          Bytes.unsafe_to_string s
         else s
 
       (* -------------------------------------------------------------------------- *)
