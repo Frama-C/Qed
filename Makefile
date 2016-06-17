@@ -29,6 +29,7 @@ help:
 	@echo ""
 	@echo "  make build     compile the library"
 	@echo "  make install   install the library"
+	@echo "  make uninstall uninstall the library"
 	@echo "  make doc       generate documentation"
 	@echo "  make clean     remove generated files"
 	@echo "  make headers   normalize files"
@@ -52,9 +53,20 @@ build:
 	@ocamlbuild $(DEPENDS) $(FLAGS) $(TARGETS)
 
 # --------------------------------------------------------------------------
+# ---  Install                                                           ---
+# --------------------------------------------------------------------------
 
 install:
 	@echo "Install Qed."
+	@if [ -e $(shell ocamlfind printconf destdir)/$(PKG) ] ;\
+	 then ocamlfind remove $(PKG) ; fi
+	@ocamlfind install $(PKG) META _build/src/$(PKG).cm* _build/src/$(PKG).o
+
+uninstall:
+	@echo "Uninstall Qed."
+	@ocamlfind remove $(PKG)
+
+# --------------------------------------------------------------------------
 
 doc:
 	@echo "Qed Documentation."
