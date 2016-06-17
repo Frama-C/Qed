@@ -1,8 +1,0 @@
-Qed file "list.qed".
-Type list defined.
-Constructor nil defined.
-Constructor cons defined.
-true : prop.
-true : prop
-true : prop
-Done.

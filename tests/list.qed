@@ -1,7 +1,0 @@
-type 'a list.
-let constructor nil : 'a list.
-let constructor cons : 'a -> 'a list -> 'a list.
-print forall x,l. cons x l != nil.
-simplify forall x,y,l. cons x l = cons y l => x=y.
-simplify forall x,y,l. cons x l != cons y l => x!=y.
-
