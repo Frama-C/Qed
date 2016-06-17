@@ -20,7 +20,26 @@ The main features of the library are:
  - flexible pretty-printing
  - export engines to SMT solvers and proof assistants
 
-# License
+## Installation
+
+Requirements:
+ - `ocaml 4.02.3` or higher, with `ocamlfind` and `ocamlbuild`
+
+To build and install the library:
+```
+$ make && make install
+```
+
+## Documentation
+
+Documentation is available after:
+```
+$ make doc
+```
+
+The entry point is at `qed.docdir/index.html`, see modules `Logic` and `Term` to start with.
+
+## License
 
 The Qed Library is distributed under the Gnu Lesser General Public License,
 version 2.1, a [copy](licenses/LGPLv2.1) of which is available in the repository.

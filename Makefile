@@ -53,6 +53,24 @@ build:
 	@ocamlbuild $(DEPENDS) $(FLAGS) $(TARGETS)
 
 # --------------------------------------------------------------------------
+# --- Documentation
+# --------------------------------------------------------------------------
+
+doc: src/$(PKG).odocl
+	@echo "Generating '$(NAME)' documentation"
+	@ocamlbuild $(DEPENDS) $(FLAGS) \
+		-docflag -t -docflag "$(NAME) Library" \
+		-docflag -short-functors \
+		src/$(PKG).docdir/index.html
+	@cp -f ceatech.css _build/src/$(PKG).docdir/style.css
+	@echo "Documentation at $(PWD)/qed.docdir/index.html"
+
+src/$(PKG).odocl: src/$(PKG).mlpack
+	@rm -f $@
+	@cp $< $@
+	@chmod a-w $@
+
+# --------------------------------------------------------------------------
 # ---  Install                                                           ---
 # --------------------------------------------------------------------------
 
@@ -68,11 +86,9 @@ uninstall:
 
 # --------------------------------------------------------------------------
 
-doc:
-	@echo "Qed Documentation."
-
 clean:
 	@echo "Cleaning"
+	@rm -f src/$(PKG).odocl src/*~
 	@ocamlbuild -clean
 
 headers:
