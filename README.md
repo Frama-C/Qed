@@ -19,3 +19,10 @@ The main features of the library are:
  - combinators for memoization, substitution, shared sub-terms
  - flexible pretty-printing
  - export engines to SMT solvers and proof assistants
+
+# License
+
+The Qed Library is distributed under the Gnu Lesser General Public License,
+Version 2.1, a (copy)[licenses/LGPLv2.1] of which is available in the repository.
+
+Copyright CEA 2009
