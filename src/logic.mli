@@ -138,24 +138,24 @@ type ('z,'f,'a,'d,'x,'b,'e) term_repr =
   | False
   | Kint  of 'z
   | Kreal of R.t
-  | Times of 'z * 'e
-  | Add   of 'e list
-  | Mul   of 'e list
+  | Times of 'z * 'e      (** mult: k1 * e2 *)
+  | Add   of 'e list      (** add:  e11 + ... + e1n *)
+  | Mul   of 'e list      (** mult: e11 * ... * e1n *)
   | Div   of 'e * 'e
   | Mod   of 'e * 'e
   | Eq    of 'e * 'e
   | Neq   of 'e * 'e
   | Leq   of 'e * 'e
   | Lt    of 'e * 'e
-  | Aget  of 'e * 'e
-  | Aset  of 'e * 'e * 'e
+  | Aget  of 'e * 'e      (** access: array1[idx2] *)
+  | Aset  of 'e * 'e * 'e (** update: array1[idx2 -> elem3] *)
   | Rget  of 'e * 'f
   | Rdef  of ('f * 'e) list
-  | And   of 'e list
-  | Or    of 'e list
+  | And   of 'e list      (** and: e11 && ... && e1n *)
+  | Or    of 'e list      (** or:  e11 || ... || e1n *)
   | Not   of 'e
-  | Imply of 'e list * 'e
-  | If    of 'e * 'e * 'e
+  | Imply of 'e list * 'e (** imply: (e11 && ... && e1n) ==> e2 *)
+  | If    of 'e * 'e * 'e (** ite: if c1 then e2 else e3 *)
   | Fun   of 'd * 'e list (** Complete call (no partial app.) *)
   | Fvar  of 'x
   | Bvar  of int * ('f,'a) datatype
@@ -181,7 +181,6 @@ sig
 
   type var = Var.t
   type tau = (Field.t,ADT.t) datatype
-  type signature = (Field.t,ADT.t) funtype
 
   module Tau : Data with type t = tau
   module Vars : Idxset.S with type elt = var
@@ -304,6 +303,21 @@ sig
 
   val lc_map : (term -> term) -> term -> term
   val lc_iter : (term -> unit) -> term -> unit
+
+  (** {3 Partial Typing} *)
+
+  (** Try to extract a type of term.
+      Parameterized by optional extractors for field and functions.
+      Extractors may raise [Not_found] ; however, they are only used when
+      the provided kinds for fields and functions are not precise enough.
+      @field type of a field value
+      @record type of the record containing a field
+      @call type of the values returned by the function
+      @raise [Not_found] if no type is found. *)
+  val typeof :
+    ?field:(Field.t -> tau) ->
+    ?record:(Field.t -> tau) ->
+    ?call:(Fun.t -> tau) -> term -> tau
 
   (** {3 Support for Builtins} *)
 

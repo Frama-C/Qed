@@ -373,6 +373,13 @@ struct
   module COMPARE =
   struct
 
+    let fun_rank f =
+      match Fun.category f with
+      | Function -> 3
+      | Injection -> 2
+      | Constructor -> 1
+      | Operator _ -> 0
+
     let cmp_size a b = Pervasives.compare a.size b.size
     let rank_bind = function Forall -> 0 | Exists -> 1 | Lambda -> 2
     let cmp_bind p q = rank_bind p - rank_bind q
@@ -418,11 +425,13 @@ struct
             let cmp = phi a1 a2 in
             if cmp <> 0 then cmp else phi b1 b2
       | Fun(f,xs) , Fun(g,ys) ->
-          let cmp = cmp_size a b in
+          let cmp = fun_rank f - fun_rank g in
           if cmp <> 0 then cmp else
-            let cmp = Fun.compare f g in
+            let cmp = cmp_size a b in
             if cmp <> 0 then cmp else
-              Hcons.compare_list phi xs ys
+              let cmp = Fun.compare f g in
+              if cmp <> 0 then cmp else
+                Hcons.compare_list phi xs ys
       | Fun (_,[]) , _ -> (-1)  (* (a) as a variable *)
       | _ , Fun (_,[]) -> 1
       | Eq _ , _ -> (-1)        (* (b) equality *)
@@ -561,8 +570,11 @@ struct
   let compare_raising_absorbant a b =
     if a == b then 0
     else
-      let a' = if is_prop a then (let na = !extern_not a in if na == b then raise Absorbant; na) else a in
-      let b' = if is_prop b then (let nb = !extern_not b in if nb == a then raise Absorbant; nb) else b in
+      let negate ~abs e =
+        let ne = !extern_not e in
+        if abs == ne then raise Absorbant ; ne in
+      let a' = if is_prop a then negate ~abs:b a else a in
+      let b' = if is_prop b then negate ~abs:a b else b in
       if a == b' || a' == b
       then COMPARE.compare a b
       else COMPARE.compare (atom_min a a') (atom_min b b')
@@ -733,7 +745,7 @@ struct
   let c_lt  x y = insert (Lt (x,y))
   let insert_eq  x y = insert (Eq (x,y))
   let insert_neq x y = insert (Neq(x,y))
-  let sym c x y = if compare x y > 0 then c y x else c x y
+  let sym c x y = if compare x y < 0 then c y x else c x y
   let compare_field (f,x) (g,y) =
     let cmp = Field.compare f g in
     if cmp = 0 then compare x y else cmp
@@ -1821,12 +1833,12 @@ struct
     | _ ->
         try cache_find mu e
         with Not_found ->
-          cache_bind mu e
-            (if lc_closed e
-             then
-               try sigma e
-               with Not_found -> rebuild (gsubst mu sigma) e
-             else rebuild (gsubst mu sigma) e)
+          let e0 = rebuild (gsubst mu sigma) e in
+          let e1 =
+            if lc_closed e0 then
+              try sigma e0 with Not_found -> e0
+            else e0 in
+          cache_bind mu e e1
 
   let e_subst ?sigma f e =
     let cache = match sigma with None -> ref Tmap.empty | Some c -> c in
@@ -2355,5 +2367,79 @@ struct
     let m = marks ?shared ?shareable () in
     List.iter (mark m) es ;
     defs m
+
+  (* -------------------------------------------------------------------------- *)
+  (* --- Typing                                                             --- *)
+  (* -------------------------------------------------------------------------- *)
+
+  let tau_of_sort = function
+    | Sint -> Int
+    | Sreal -> Real
+    | Sbool -> Bool
+    | Sprop | Sdata | Sarray _ -> raise Not_found
+
+  let tau_of_arraysort = function
+    | Sarray s -> tau_of_sort s
+    | _ -> raise Not_found
+
+  let tau_merge a b =
+    match a,b with
+    | Bool , Bool -> Bool
+    | (Bool|Prop) , (Bool|Prop) -> Prop
+    | Int , Int -> Int
+    | (Int|Real) , (Int|Real) -> Real
+    | _ -> raise Not_found
+
+  let rec merge_list t f = function
+    | [] -> t
+    | e::es -> merge_list (tau_merge t (f e)) f es
+
+  type env = {
+    field : Field.t -> tau ;
+    record : Field.t -> tau ;
+    call : Fun.t -> tau ;
+  }
+
+  let rec typecheck env e =
+    match e.sort with
+    | Sint -> Int
+    | Sreal -> Real
+    | Sbool -> Bool
+    | Sprop -> Prop
+    | Sdata | Sarray _ ->
+        match e.repr with
+        | Bvar (_,ty) -> ty
+        | Fvar x -> tau_of_var x
+        | Aset(m,k,v) ->
+            (try typecheck env m
+             with Not_found ->
+               Array(typecheck env k,typecheck env v))
+        | Fun(f,_) ->
+            (try tau_of_sort (Fun.sort f)
+             with Not_found -> env.call f)
+        | Aget(m,_) ->
+            (try match typecheck env m with
+               | Array(_,v) -> v
+               | _ -> raise Not_found
+             with Not_found -> tau_of_arraysort m.sort)
+        | Rdef [] -> raise Not_found
+        | Rdef ((f,_)::_) -> env.record f
+        | Rget (_,f) ->
+            (try tau_of_sort (Field.sort f)
+             with Not_found -> env.field f)
+        | True | False -> Bool
+        | Kint _ -> Int
+        | Kreal _ -> Real
+        | Times(_,e) -> typecheck env e
+        | Add es | Mul es -> merge_list Int (typecheck env) es
+        | Div (a,b) | Mod (a,b) | If(_,a,b) ->
+            tau_merge (typecheck env a) (typecheck env b)
+        | Eq _ | Neq _ | Leq _ | Lt _ | And _ | Or _ | Not _ | Imply _ -> Bool
+        | Bind((Forall|Exists),_,_) -> Prop
+        | Apply _ | Bind(Lambda,_,_) -> raise Not_found
+
+  let undefined _ = raise Not_found
+  let typeof ?(field=undefined) ?(record=undefined) ?(call=undefined) e =
+    typecheck { field ; record ; call } e
 
 end
