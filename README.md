@@ -23,6 +23,6 @@ The main features of the library are:
 # License
 
 The Qed Library is distributed under the Gnu Lesser General Public License,
-Version 2.1, a [copy](licenses/LGPLv2.1) of which is available in the repository.
+version 2.1, a [copy](licenses/LGPLv2.1) of which is available in the repository.
 
-Copyright CEA 2009
+Copyright **CEA Tech** 2009.
