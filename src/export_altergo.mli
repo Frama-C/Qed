@@ -1,9 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
-(*  This file is part of WP plug-in of Frama-C.                           *)
+(*  This file is part of Qed Library                                      *)
 (*                                                                        *)
 (*  Copyright (C) 2007-2016                                               *)
-(*    CEA (Commissariat a l'energie atomique et aux energies              *)
+(*    CEA (Commissariat à l'énergie atomique et aux énergies              *)
 (*         alternatives)                                                  *)
 (*                                                                        *)
 (*  you can redistribute it and/or modify it under the terms of the GNU   *)
@@ -35,10 +35,10 @@ sig
 
   open T
   module Env : Engine.Env with type term := term
-  
+
   type trigger = (T.var,Fun.t) Engine.ftrigger
   type typedef = (tau,Field.t,Fun.t) Engine.ftypedef
-  
+
   class virtual engine :
     object
       method set_quantify_let : bool -> unit
@@ -47,7 +47,7 @@ sig
       method virtual set_typedef : ADT.t -> tau -> unit
 
       method typeof : term -> tau (** Defaults to T.typeof *)
-      
+
       inherit [Z.t,ADT.t,Field.t,Fun.t,tau,var,term,Env.t] Engine.engine
       method marks : Env.t * T.marks
       method op_spaced : string -> bool

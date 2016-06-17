@@ -1,9 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
-(*  This file is part of WP plug-in of Frama-C.                           *)
+(*  This file is part of Qed Library                                      *)
 (*                                                                        *)
 (*  Copyright (C) 2007-2016                                               *)
-(*    CEA (Commissariat a l'energie atomique et aux energies              *)
+(*    CEA (Commissariat à l'énergie atomique et aux énergies              *)
 (*         alternatives)                                                  *)
 (*                                                                        *)
 (*  you can redistribute it and/or modify it under the terms of the GNU   *)
@@ -127,9 +127,7 @@ and token_hex = parse
       | '0' .. '9' -> int_of_char '0'
       | 'a' .. 'f' -> int_of_char 'a' - 10
       | 'A' .. 'F' -> int_of_char 'A' - 10
-      | _ ->
-	  let e = "?" in e.[0] <- c ;
-	  error "Incorrect hex-digit" e
+      | _ -> error "Incorrect hex-digit" (String.make 1 c) 
     in int_of_char c - d
 
   open Big_int
@@ -164,8 +162,9 @@ and token_hex = parse
 
   let power_of_ten e =
     if e < 0 then raise (Invalid_argument "negative power") ;
-    let s = String.make (succ e) '0' in
-    s.[0] <- '1' ; s
+    let s = Bytes.make (succ e) '0' in
+    Bytes.set s e '1' ;
+    Bytes.unsafe_to_string s
 
   let significant cst =
     let digits = cst.man ^ cst.com in

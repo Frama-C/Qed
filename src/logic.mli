@@ -1,9 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
-(*  This file is part of WP plug-in of Frama-C.                           *)
+(*  This file is part of Qed Library                                      *)
 (*                                                                        *)
 (*  Copyright (C) 2007-2016                                               *)
-(*    CEA (Commissariat a l'energie atomique et aux energies              *)
+(*    CEA (Commissariat à l'énergie atomique et aux énergies              *)
 (*         alternatives)                                                  *)
 (*                                                                        *)
 (*  you can redistribute it and/or modify it under the terms of the GNU   *)
@@ -125,13 +125,13 @@ type ('f,'a) funtype = {
 }
 
 (** representation of terms. type arguments are the following:
-  - 'z: representation of integral constants
-  - 'f: representation of fields
-  - 'a: representation of abstract data types
-  - 'd: representation of functions
-  - 'x: representation of free variables
-  - 'b: representation of bound term (phantom type equal to 'e)
-  - 'e: sub-expression
+    - 'z: representation of integral constants
+    - 'f: representation of fields
+    - 'a: representation of abstract data types
+    - 'd: representation of functions
+    - 'x: representation of free variables
+    - 'b: representation of bound term (phantom type equal to 'e)
+    - 'e: sub-expression
 *)
 type ('z,'f,'a,'d,'x,'b,'e) term_repr =
   | True
@@ -181,7 +181,7 @@ sig
 
   type var = Var.t
   type tau = (Field.t,ADT.t) datatype
-  
+
   module Tau : Data with type t = tau
   module Vars : Idxset.S with type elt = var
   module Vmap : Idxmap.S with type key = var
@@ -318,7 +318,7 @@ sig
     ?field:(Field.t -> tau) ->
     ?record:(Field.t -> tau) ->
     ?call:(Fun.t -> tau) -> term -> tau
-  
+
   (** {3 Support for Builtins} *)
 
   val set_builtin : Fun.t -> (term list -> term) -> unit

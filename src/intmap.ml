@@ -1,9 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
-(*  This file is part of WP plug-in of Frama-C.                           *)
+(*  This file is part of Qed Library                                      *)
 (*                                                                        *)
 (*  Copyright (C) 2007-2016                                               *)
-(*    CEA (Commissariat a l'energie atomique et aux energies              *)
+(*    CEA (Commissariat à l'énergie atomique et aux énergies              *)
 (*         alternatives)                                                  *)
 (*                                                                        *)
 (*  you can redistribute it and/or modify it under the terms of the GNU   *)
@@ -56,7 +56,7 @@ let decode_mask p = lowest_bit (lnot p)
 
 let pp_mask m fmt p =
   begin
-    let bits = Array.create 63 false in
+    let bits = Array.make 63 false in
     let last = ref 0 in
     for i = 0 to 62 do
       let u = 1 lsl i in
@@ -72,7 +72,7 @@ let pp_mask m fmt p =
 
 let pp_bits fmt k =
   begin
-    let bits = Array.create 63 false in
+    let bits = Array.make 63 false in
     let last = ref 0 in
     for i = 0 to 62 do
       if (1 lsl i) land k <> 0 then

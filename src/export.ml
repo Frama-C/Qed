@@ -1,9 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
-(*  This file is part of WP plug-in of Frama-C.                           *)
+(*  This file is part of Qed Library                                      *)
 (*                                                                        *)
 (*  Copyright (C) 2007-2016                                               *)
-(*    CEA (Commissariat a l'energie atomique et aux energies              *)
+(*    CEA (Commissariat à l'énergie atomique et aux énergies              *)
 (*         alternatives)                                                  *)
 (*                                                                        *)
 (*  you can redistribute it and/or modify it under the terms of the GNU   *)
@@ -161,7 +161,7 @@ struct
       ( if not suggest then
           lnk.index <- Ident.add basename (succ k) lnk.index
       ; x )
-  
+
   let fresh ?(suggest=false) basename lnk =
     let basename = lnk.base basename in
     let k = try Ident.find basename lnk.index with Not_found -> 0 in
@@ -196,7 +196,7 @@ struct
        with Not_found -> ()) ;
       lnk.unzip <- Tset.add t lnk.unzip ;
     end
-    
+
   module Env =
   struct
     type t = allocator
@@ -214,7 +214,7 @@ struct
     let shared lnk t = Tmap.mem t lnk.share
     let shareable lnk t = not (Tset.mem t lnk.unzip)
   end
-  
+
   (* -------------------------------------------------------------------------- *)
   (* --- Binders                                                            --- *)
   (* -------------------------------------------------------------------------- *)
@@ -266,13 +266,13 @@ struct
         let shareable e = self#is_shareable e && Env.shareable env e in
         let marks = T.marks ~shared ~shareable () in
         env , marks
-      
+
       method scope env (job : unit -> unit) =
         let stack = alloc in
         alloc <- env ;
         try job () ; alloc <- stack
         with err -> alloc <- stack ; raise err
-      
+
       method local (job : unit -> unit) =
         self#scope (copy_alloc alloc) job
 
@@ -380,13 +380,13 @@ struct
               fprintf fmt "%s %a" op self#pp_flow x
             else
               fprintf fmt "%s%a" op self#pp_atom x
-        | Call f -> self#pp_call f fmt [x]
+        | Call f -> self#pp_call ~f fmt [x]
 
       method private pp_binop ~op fmt x y =
         match op with
         | Assoc op | Op op ->
             fprintf fmt "%a %s@ %a" self#pp_atom x op self#pp_atom y
-        | Call f -> self#pp_call f fmt [x;y]
+        | Call f -> self#pp_call ~f fmt [x;y]
 
       method private pp_binop_term ~op fmt x y =
         self#with_mode Mterm (fun _old -> self#pp_binop ~op fmt x y)
@@ -532,7 +532,7 @@ struct
           begin fun _ ->
             match phi (amode mode) with
             | Assoc op | Op op ->
-                Plib.pp_binop op (self#pp_arith_arg Atom) fmt a b
+                Plib.pp_binop ~op (self#pp_arith_arg Atom) fmt a b
             | Call f -> self#pp_arith_call ~f fmt [a;b]
           end
 
@@ -568,13 +568,13 @@ struct
                  | None ->
                      begin
                        fprintf fmt "@[<hov 2>" ;
-                       Plib.pp_binop op (self#pp_arith_arg Atom) fmt a b ;
+                       Plib.pp_binop ~op (self#pp_arith_arg Atom) fmt a b ;
                        fprintf fmt "@]" ;
                      end
                  | Some s ->
                      begin
                        fprintf fmt "@[<hov 1>(" ;
-                       Plib.pp_binop op (self#pp_arith_arg Atom) fmt a b ;
+                       Plib.pp_binop ~op (self#pp_arith_arg Atom) fmt a b ;
                        fprintf fmt ")%s@]" s ;
                      end)
         | Call f ->
@@ -781,9 +781,9 @@ struct
       method private pp_do_flow fmt e =
         try self#pp_var fmt (Tmap.find e alloc.share)
         with Not_found ->
-          match self#op_scope_for e with
-          | None -> self#pp_repr fmt e
-          | Some s -> fprintf fmt "@[<hov 1>(%a)%s@]" self#pp_repr e s
+        match self#op_scope_for e with
+        | None -> self#pp_repr fmt e
+        | Some s -> fprintf fmt "@[<hov 1>(%a)%s@]" self#pp_repr e s
 
       method private pp_addition fmt xs =
         let amode = if List.exists T.is_real xs then Areal else Aint in

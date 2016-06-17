@@ -1,9 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
-(*  This file is part of WP plug-in of Frama-C.                           *)
+(*  This file is part of Qed Library                                      *)
 (*                                                                        *)
 (*  Copyright (C) 2007-2016                                               *)
-(*    CEA (Commissariat a l'energie atomique et aux energies              *)
+(*    CEA (Commissariat à l'énergie atomique et aux énergies              *)
 (*         alternatives)                                                  *)
 (*                                                                        *)
 (*  you can redistribute it and/or modify it under the terms of the GNU   *)
@@ -116,7 +116,7 @@ class type virtual ['z,'adt,'field,'logic,'tau,'var,'term,'env] engine =
     method scope : 'env -> (unit -> unit) -> unit
     (** Calls the continuation in the provided environment. 
         Previous environment is restored after return. *)
-    
+
     method local : (unit -> unit) -> unit
     (** Calls the continuation in a local copy of the environment.
         Previous environment is restored after return, but allocators

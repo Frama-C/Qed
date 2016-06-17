@@ -1,9 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
-(*  This file is part of WP plug-in of Frama-C.                           *)
+(*  This file is part of Qed Library                                      *)
 (*                                                                        *)
 (*  Copyright (C) 2007-2016                                               *)
-(*    CEA (Commissariat a l'energie atomique et aux energies              *)
+(*    CEA (Commissariat à l'énergie atomique et aux énergies              *)
 (*         alternatives)                                                  *)
 (*                                                                        *)
 (*  you can redistribute it and/or modify it under the terms of the GNU   *)
@@ -67,7 +67,7 @@ struct
     | C( e , r ) when A.equal x e -> r
     | _ -> let r = f x in m.(h) <- C(x,r) ; r
 
-  let create ~size = Array.create (alloc size) N
+  let create ~size = Array.make (alloc size) N
 
 end
 
@@ -87,6 +87,6 @@ struct
     | C( a , b , r ) when A.equal x a && A.equal y b -> r
     | _ -> let r = f x y in m.(h) <- C(x,y,r) ; r
 
-  let create ~size = Array.create (alloc size) N
+  let create ~size = Array.make (alloc size) N
 
 end

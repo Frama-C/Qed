@@ -1,9 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
-(*  This file is part of WP plug-in of Frama-C.                           *)
+(*  This file is part of Qed Library                                      *)
 (*                                                                        *)
 (*  Copyright (C) 2007-2016                                               *)
-(*    CEA (Commissariat a l'energie atomique et aux energies              *)
+(*    CEA (Commissariat à l'énergie atomique et aux énergies              *)
 (*         alternatives)                                                  *)
 (*                                                                        *)
 (*  you can redistribute it and/or modify it under the terms of the GNU   *)
@@ -61,9 +61,9 @@ struct
         (** TODO: better uncapitalization of the first letter? utf8? *)
         let lower0 = Char.lowercase s.[0] in
         if String.length s > 0 &&  lower0 <> s.[0] then
-          let s = String.copy s in
-          s.[0] <- lower0;
-          s
+          let s = Bytes.of_string s in
+          Bytes.set s 0 lower0 ;
+          Bytes.unsafe_to_string s
         else s
 
       (* -------------------------------------------------------------------------- *)
@@ -89,7 +89,7 @@ struct
 
       method pp_datatype adt fmt = function
         | [] -> pp_print_string fmt (self#datatype adt)
-        | ts -> Plib.pp_call_apply (self#datatype adt) self#pp_subtau fmt ts
+        | ts -> Plib.pp_call_apply ~f:(self#datatype adt) self#pp_subtau fmt ts
 
       (* -------------------------------------------------------------------------- *)
       (* --- Primitives                                                         --- *)
