@@ -125,13 +125,13 @@ type ('f,'a) funtype = {
 }
 
 (** representation of terms. type arguments are the following:
-  - 'z: representation of integral constants
-  - 'f: representation of fields
-  - 'a: representation of abstract data types
-  - 'd: representation of functions
-  - 'x: representation of free variables
-  - 'b: representation of bound term (phantom type equal to 'e)
-  - 'e: sub-expression
+    - 'z: representation of integral constants
+    - 'f: representation of fields
+    - 'a: representation of abstract data types
+    - 'd: representation of functions
+    - 'x: representation of free variables
+    - 'b: representation of bound term (phantom type equal to 'e)
+    - 'e: sub-expression
 *)
 type ('z,'f,'a,'d,'x,'b,'e) term_repr =
   | True

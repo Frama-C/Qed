@@ -52,7 +52,7 @@ sig
 
   type trigger = (var,Fun.t) ftrigger
   type typedef = (tau,Field.t,Fun.t) ftypedef
-  
+
   class virtual engine :
     object
 

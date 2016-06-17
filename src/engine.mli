@@ -116,7 +116,7 @@ class type virtual ['z,'adt,'field,'logic,'tau,'var,'term,'env] engine =
     method scope : 'env -> (unit -> unit) -> unit
     (** Calls the continuation in the provided environment. 
         Previous environment is restored after return. *)
-    
+
     method local : (unit -> unit) -> unit
     (** Calls the continuation in a local copy of the environment.
         Previous environment is restored after return, but allocators

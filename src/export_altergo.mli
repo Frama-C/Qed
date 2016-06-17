@@ -35,7 +35,7 @@ sig
 
   open T
   module Env : Engine.Env with type term := term
-  
+
   type trigger = (T.var,Fun.t) Engine.ftrigger
   type typedef = (tau,Field.t,Fun.t) Engine.ftypedef
 
