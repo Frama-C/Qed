@@ -403,6 +403,7 @@ sig
   val shared :
     ?shared:(term -> bool) ->
     ?shareable:(term -> bool) ->
+    ?subterms:((term -> unit) -> term -> unit) ->
     term list -> term list
   (** Computes the sub-terms that appear several times.
       	[shared marked linked e] returns the shared subterms of [e].
@@ -411,8 +412,10 @@ sig
       	order of definition: each trailing terms only depend on heading ones.
 
       	The traversal is controled by two optional arguments:
-      	- [atomic] those terms are not traversed (considered as atomic)
-      	- [shareable] those terms that can be shared (all by default)
+      	- [shared] those terms are not traversed (considered as atomic, default to none)
+      	- [shareable] those terms ([is_simple] excepted) that can be shared (default to all)
+      	- [subterms] those sub-terms a term to be considered during
+          traversal ([lc_iter] by default)
   *)
 
   (** Low-level shared primitives: [shared] is actually a combination of
@@ -425,13 +428,13 @@ sig
 
   type marks
 
-  (** Create a marking accumulator
-      @param shared terms that are (or will be) already shared
-      (default to none) 
-      @param shareable terms that can be shared (default to all) *)
+  (** Create a marking accumulator.
+      Same defaults than [shared]. *)
+
   val marks :
     ?shared:(term -> bool) ->
     ?shareable:(term -> bool) ->
+    ?subterms:((term -> unit) -> term -> unit) ->
     unit -> marks
 
   (** Mark a term to be printed *)

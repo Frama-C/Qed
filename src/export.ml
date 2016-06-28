@@ -246,6 +246,10 @@ struct
           | _ -> T.Fun.sort f = Sprop
         end
     | _ -> false
+  
+  (* -------------------------------------------------------------------------- *)
+  (* --- Engine                                                             --- *)
+  (* -------------------------------------------------------------------------- *)
 
   class virtual engine =
     object(self)
@@ -263,8 +267,9 @@ struct
       method marks =
         let env = alloc (* NOT a fresh copy *) in
         let shared = Env.shared env in
-        let shareable e = self#is_shareable e && Env.shareable env e in
-        let marks = T.marks ~shared ~shareable () in
+        let shareable e = self#shareable e && Env.shareable env e in
+        let subterms = self#subterms in
+        let marks = T.marks ~shared ~shareable ~subterms () in
         env , marks
       
       method scope env (job : unit -> unit) =
@@ -711,7 +716,9 @@ struct
       (* --- Sharing                                                            --- *)
       (* -------------------------------------------------------------------------- *)
 
-      method is_shareable e =
+      method shared (_ : term) = false
+      
+      method shareable e =
         match T.repr e with
         | Kint _ | Kreal _ | True | False -> false
         | Times _ | Add _ | Mul _ | Div _ | Mod _ -> true
@@ -721,12 +728,23 @@ struct
         | Fun _ -> not (T.is_prop e)
         | Bvar _ | Fvar _ | Apply _ | Bind _ -> false
 
+      method subterms f e =
+        match T.repr e with
+        | Rdef fts ->
+            begin
+              match T.record_with fts with
+              | None -> T.lc_iter f e
+              | Some(a,fts) -> f a ; List.iter (fun (_,e) -> f e) fts
+            end
+        | _ -> T.lc_iter f e
+      
       method virtual pp_let : Format.formatter -> pmode -> string -> term -> unit
 
       method private pp_shared fmt e =
-        let shared e = Tmap.mem e alloc.share in
-        let shareable e = self#is_shareable e || Tset.mem e alloc.unzip in
-        let es = T.shared ~shareable ~shared [e] in
+        let shared e = Tmap.mem e alloc.share || self#shared e in
+        let shareable e = self#shareable e && not (Tset.mem e alloc.unzip) in
+        let subterms = self#subterms in
+        let es = T.shared ~shareable ~shared ~subterms [e] in
         if es <> [] then
           self#local
             begin fun () ->

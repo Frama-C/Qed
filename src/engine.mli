@@ -250,7 +250,9 @@ class type virtual ['z,'adt,'field,'logic,'tau,'var,'term,'env] engine =
 
     (** {3 Bindings} *)
 
-    method is_shareable : 'term -> bool
+    method shared : 'term -> bool
+    method shareable : 'term -> bool
+    method subterms : ('term -> unit) -> 'term -> unit
     method pp_let : formatter -> pmode -> string -> 'term -> unit
 
     (** {3 Terms} *)

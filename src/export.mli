@@ -137,7 +137,9 @@ sig
       method virtual pp_exists : tau -> string list printer
       method virtual pp_lambda : (string * tau) list printer
 
-      method is_shareable : term -> bool
+      method shared : term -> bool
+      method shareable : term -> bool
+      method subterms : (term -> unit) -> term -> unit
       method virtual pp_let : formatter -> pmode -> string -> term -> unit
       method pp_atom : term printer
       method pp_flow : term printer

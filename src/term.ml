@@ -2280,6 +2280,7 @@ struct
   type marks = {
     marked : (term -> bool) ;    (* context-letified terms *)
     shareable : (term -> bool) ; (* terms that can be shared *)
+    subterms : (term -> unit) -> term -> unit ; (* subterm iterator *)
     mutable mark : mark Tmap.t ; (* current marks during traversal *)
     mutable shared : Tset.t ;    (* marked several times *)
     mutable roots : term list ;  (* added as marked roots *)
@@ -2307,12 +2308,12 @@ struct
             else
               begin
                 set_mark m e FirstMark ;
-                lc_iter (walk m r) e ;
+                m.subterms (walk m r) e ;
               end
         | FirstMark ->
             if m.shareable e && lc_closed_at r e
             then m.shared <- Tset.add e m.shared
-            else lc_iter (walk m r) e ;
+            else m.subterms (walk m r) e ;
             set_mark m e Marked
         | Marked ->
             ()
@@ -2328,7 +2329,7 @@ struct
         m.roots <- e :: m.roots ;
         m.shared <- Tset.add e m.shared ;
         m.mark <- Tmap.add e Marked m.mark ;
-        lc_iter (walk m (Bvars.order e.bind)) e
+        m.subterms (walk m (Bvars.order e.bind)) e
       end
     else mark m e
   
@@ -2349,11 +2350,11 @@ struct
   let none = fun _ -> false
   let all = fun _ -> true
 
-  let marks ?(shared=none) ?(shareable=all) () =
+  let marks ?(shared=none) ?(shareable=all) ?(subterms=lc_iter) () =
     {
-      shareable ;
-      marked = shared ;
-      shared = Tset.empty ;
+      shareable ; subterms ;
+      marked = shared ; (* allready shared are set to be marked *)
+      shared = Tset.empty ; (* accumulator initialy empty *)
       mark = Tmap.empty ;
       roots = [] ;
     }
@@ -2363,8 +2364,8 @@ struct
     List.iter (collect m.shared defines) m.roots ;
     List.rev defines.stack
 
-  let shared ?shared ?shareable es =
-    let m = marks ?shared ?shareable () in
+  let shared ?shared ?shareable ?subterms es =
+    let m = marks ?shared ?shareable ?subterms () in
     List.iter (mark m) es ;
     defs m
 
