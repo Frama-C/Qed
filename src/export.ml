@@ -179,7 +179,10 @@ struct
     let x = fresh (Var.basename v) lnk in
     lnk.fvars <- VarMap.add v x lnk.fvars ; x
 
-  let find_fvar v lnk = VarMap.find v lnk.fvars
+  let find_fvar v lnk =
+    try VarMap.find v lnk.fvars
+    with Not_found ->
+      Plib.failure "Unbound variable %a" Var.pretty v
 
   let bind_term x t lnk =
     begin
