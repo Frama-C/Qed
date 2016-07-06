@@ -262,10 +262,18 @@ class type virtual ['z,'adt,'field,'logic,'tau,'var,'term,'env] engine =
         	Shared sub-terms are detected on behalf of this method. *)
 
     method pp_flow : 'term printer
-    (** Printer with shared sub-terms and without parentheses. *)
+    (** Printer with shared sub-terms printed with their name and 
+        without parentheses. *)
 
     method pp_atom : 'term printer
-    (** Printer with shared sun-terms and parentheses for non-atomic expressions. *)
+    (** Printer with shared sub-terms printed with their name and 
+        within parentheses for non-atomic expressions. Additional
+        scope terminates the expression when required (typically 
+        for Coq). *)
+
+    method pp_repr : 'term printer
+    (** Raw representation of a term, as it is. This is where you should hook
+        a printer to keep sharing, parentheses, and such. *)
 
     (** {3 Top Level} *)
 

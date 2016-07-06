@@ -771,6 +771,9 @@ struct
       (* --- Expressions                                                        --- *)
       (* -------------------------------------------------------------------------- *)
 
+      method pp_atom fmt e = self#pp_bool self#pp_do_atom fmt e
+      method pp_flow fmt e = self#pp_bool self#pp_do_flow fmt e
+      
       method private op_scope_for e =
         match mode with
         | (Mpositive | Mnegative | Mterm) when T.is_int e -> self#op_scope Aint
@@ -785,9 +788,6 @@ struct
           | Not a -> fprintf fmt "(%a=%s)" self#pp_do_atom a (self#e_false Cterm)
           | _ -> fprintf fmt "(%a=%s)" self#pp_do_atom e (self#e_true Cterm)
         else pp fmt e
-
-      method pp_atom fmt e = self#pp_bool self#pp_do_atom fmt e
-      method pp_flow fmt e = self#pp_bool self#pp_do_flow fmt e
 
       method private pp_do_atom fmt e =
         try self#pp_var fmt (Tmap.find e alloc.share)
@@ -844,7 +844,7 @@ struct
               ) sxs
         | _ -> self#pp_arith_nary ~phi:(self#op_add) fmt xs
 
-      method private pp_repr fmt e =
+      method pp_repr fmt e =
         match T.repr e with
         | True -> pp_print_string fmt (self#e_true (cmode mode))
         | False -> pp_print_string fmt (self#e_false (cmode mode))
