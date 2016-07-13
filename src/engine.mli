@@ -112,6 +112,7 @@ class type virtual ['z,'adt,'field,'logic,'tau,'var,'term,'env] engine =
     (** {3 Global and Local Environment} *)
 
     method env : 'env (** Returns a fresh copy of the current environment. *)
+    method set_env : 'env -> unit (** Set environment. *)
     method lookup : 'term -> scope (** Term scope in the current environment. *)
     method scope : 'env -> (unit -> unit) -> unit
     (** Calls the continuation in the provided environment. 

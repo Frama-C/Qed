@@ -267,6 +267,7 @@ struct
       method lookup t : scope = Env.lookup alloc t
 
       method env = copy_alloc alloc
+      method set_env env = alloc <- env
       method marks =
         let env = alloc (* NOT a fresh copy *) in
         let shared = Env.shared env in
@@ -274,7 +275,7 @@ struct
         let subterms = self#subterms in
         let marks = T.marks ~shared ~shareable ~subterms () in
         env , marks
-      
+
       method scope env (job : unit -> unit) =
         let stack = alloc in
         alloc <- env ;

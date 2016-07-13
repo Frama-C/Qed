@@ -48,6 +48,7 @@ sig
       method virtual link : Fun.t -> link
 
       method env : Env.t
+      method set_env : Env.t -> unit
       method marks : Env.t * T.marks
       method lookup : t -> scope
       method scope : Env.t -> (unit -> unit) -> unit
