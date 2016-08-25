@@ -161,7 +161,7 @@ struct
       ( if not suggest then
           lnk.index <- Ident.add basename (succ k) lnk.index
       ; x )
-  
+
   let fresh ?(suggest=false) basename lnk =
     let basename = lnk.base basename in
     let k = try Ident.find basename lnk.index with Not_found -> 0 in
@@ -199,7 +199,7 @@ struct
        with Not_found -> ()) ;
       lnk.unzip <- Tset.add t lnk.unzip ;
     end
-    
+
   module Env =
   struct
     type t = allocator
@@ -217,7 +217,7 @@ struct
     let shared lnk t = Tmap.mem t lnk.share
     let shareable lnk t = not (Tset.mem t lnk.unzip)
   end
-  
+
   (* -------------------------------------------------------------------------- *)
   (* --- Binders                                                            --- *)
   (* -------------------------------------------------------------------------- *)
@@ -249,7 +249,7 @@ struct
           | _ -> T.Fun.sort f = Sprop
         end
     | _ -> false
-  
+
   (* -------------------------------------------------------------------------- *)
   (* --- Engine                                                             --- *)
   (* -------------------------------------------------------------------------- *)
@@ -281,7 +281,7 @@ struct
         alloc <- env ;
         try job () ; alloc <- stack
         with err -> alloc <- stack ; raise err
-      
+
       method local (job : unit -> unit) =
         self#scope (copy_alloc alloc) job
 
@@ -721,7 +721,7 @@ struct
       (* -------------------------------------------------------------------------- *)
 
       method shared (_ : term) = false
-      
+
       method shareable e =
         match T.repr e with
         | Kint _ | Kreal _ | True | False -> false
@@ -741,7 +741,7 @@ struct
               | Some(a,fts) -> f a ; List.iter (fun (_,e) -> f e) fts
             end
         | _ -> T.lc_iter f e
-      
+
       method virtual pp_let : Format.formatter -> pmode -> string -> term -> unit
 
       method private pp_shared fmt e =
@@ -774,7 +774,7 @@ struct
 
       method pp_atom fmt e = self#pp_bool self#pp_do_atom fmt e
       method pp_flow fmt e = self#pp_bool self#pp_do_flow fmt e
-      
+
       method private op_scope_for e =
         match mode with
         | (Mpositive | Mnegative | Mterm) when T.is_int e -> self#op_scope Aint
@@ -803,9 +803,9 @@ struct
       method private pp_do_flow fmt e =
         try self#pp_var fmt (Tmap.find e alloc.share)
         with Not_found ->
-          match self#op_scope_for e with
-          | None -> self#pp_repr fmt e
-          | Some s -> fprintf fmt "@[<hov 1>(%a)%s@]" self#pp_repr e s
+        match self#op_scope_for e with
+        | None -> self#pp_repr fmt e
+        | Some s -> fprintf fmt "@[<hov 1>(%a)%s@]" self#pp_repr e s
 
       method private pp_addition fmt xs =
         let amode = if List.exists T.is_real xs then Areal else Aint in

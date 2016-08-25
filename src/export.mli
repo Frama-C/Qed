@@ -52,7 +52,7 @@ sig
 
   type trigger = (var,Fun.t) ftrigger
   type typedef = (tau,Field.t,Fun.t) ftypedef
-  
+
   class virtual engine :
     object
 
@@ -146,7 +146,7 @@ sig
       method pp_atom : term printer
       method pp_flow : term printer
       method pp_repr : term printer
-      
+
       method pp_tau : tau printer
       method pp_var : string printer
       method pp_term : term printer

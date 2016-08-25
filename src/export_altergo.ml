@@ -214,7 +214,7 @@ struct
       (* -------------------------------------------------------------------------- *)
 
       method typeof e = T.typeof e
-      
+
       val mutable quantify_let = false
       method set_quantify_let e = quantify_let <- e
 

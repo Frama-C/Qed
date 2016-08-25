@@ -379,7 +379,7 @@ struct
       | Injection -> 2
       | Constructor -> 1
       | Operator _ -> 0
-    
+
     let cmp_size a b = Pervasives.compare a.size b.size
     let rank_bind = function Forall -> 0 | Exists -> 1 | Lambda -> 2
     let cmp_bind p q = rank_bind p - rank_bind q
@@ -422,8 +422,8 @@ struct
       | Mod(a1,b1) , Mod(a2,b2) ->
           let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
-          let cmp = phi a1 a2 in
-          if cmp <> 0 then cmp else phi b1 b2
+            let cmp = phi a1 a2 in
+            if cmp <> 0 then cmp else phi b1 b2
       | Fun(f,xs) , Fun(g,ys) ->
           let cmp = fun_rank f - fun_rank g in
           if cmp <> 0 then cmp else
@@ -448,12 +448,12 @@ struct
       | Times(a1,x) , Times(a2,y) ->
           let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
-          let cmp = Z.compare a1 a2 in
-          if cmp <> 0 then cmp else phi x y
+            let cmp = Z.compare a1 a2 in
+            if cmp <> 0 then cmp else phi x y
       | Times _ , _ -> (-1)
       | _ , Times _ -> 1
 
-      | Not x , Not y ->           
+      | Not x , Not y ->
           let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
             phi x y
@@ -463,18 +463,18 @@ struct
       | Imply(h1,p1) , Imply(h2,p2) ->
           let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
-          Hcons.compare_list phi (p1::h1) (p2::h2)
+            Hcons.compare_list phi (p1::h1) (p2::h2)
       | Imply _ , _ -> (-1)
       |  _ , Imply _ -> 1
 
       | Add xs , Add ys
       | Mul xs , Mul ys
       | And xs , And ys
-      | Or xs , Or ys ->           
+      | Or xs , Or ys ->
           let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
             Hcons.compare_list phi xs ys
-              
+
       | Add _ , _ -> (-1)
       | _ , Add _ -> 1
       | Mul _ , _ -> (-1)
@@ -491,61 +491,61 @@ struct
       | If(a1,b1,c1) , If(a2,b2,c2) ->
           let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
-          let cmp = phi a1 a2 in
-          if cmp <> 0 then cmp else
-            let cmp = phi b1 b2 in
-            if cmp <> 0 then cmp else phi c1 c2
+            let cmp = phi a1 a2 in
+            if cmp <> 0 then cmp else
+              let cmp = phi b1 b2 in
+              if cmp <> 0 then cmp else phi c1 c2
       | If _ , _ -> (-1)
       |  _ , If _ -> 1
 
       | Aget(a1,b1) , Aget(a2,b2) ->
           let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
-          let cmp = phi a1 a2 in
-          if cmp <> 0 then cmp else phi b1 b2
+            let cmp = phi a1 a2 in
+            if cmp <> 0 then cmp else phi b1 b2
       | Aget _ , _ -> (-1)
       |  _ , Aget _ -> 1
 
       | Aset(a1,k1,v1) , Aset(a2,k2,v2) ->
           let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
-          let cmp = phi a1 a2 in
-          if cmp <> 0 then cmp else
-            let cmp = phi k1 k2 in
-            if cmp <> 0 then cmp else phi v1 v2
+            let cmp = phi a1 a2 in
+            if cmp <> 0 then cmp else
+              let cmp = phi k1 k2 in
+              if cmp <> 0 then cmp else phi v1 v2
       | Aset _ , _ -> (-1)
       |  _ , Aset _ -> 1
 
       | Rget(r1,f1) , Rget(r2,f2) ->
           let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
-          let cmp = phi r1 r2 in
-          if cmp <> 0 then cmp else Field.compare f1 f2
+            let cmp = phi r1 r2 in
+            if cmp <> 0 then cmp else Field.compare f1 f2
       | Rget _ , _ -> (-1)
       |  _ , Rget _ -> 1
 
       | Rdef fxs , Rdef gys ->
           let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
-          Hcons.compare_list (cmp_field phi) fxs gys
+            Hcons.compare_list (cmp_field phi) fxs gys
       | Rdef _ , _ -> (-1)
       |  _ , Rdef _ -> 1
 
       | Apply(a,xs) , Apply(b,ys) ->
           let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
-          Hcons.compare_list phi (a::xs) (b::ys)
+            Hcons.compare_list phi (a::xs) (b::ys)
       | Apply _ , _ -> (-1)
       | _ , Apply _ -> 1
 
       | Bind(q1,t1,p1) , Bind(q2,t2,p2) ->
           let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
-          let cmp = cmp_bind q1 q2 in
-          if cmp <> 0 then cmp else
-            let cmp = phi p1 p2 in
+            let cmp = cmp_bind q1 q2 in
             if cmp <> 0 then cmp else
-              Tau.compare t1 t2
+              let cmp = phi p1 p2 in
+              if cmp <> 0 then cmp else
+                Tau.compare t1 t2
 
     let rec compare a b =
       if a == b then 0 else
@@ -873,11 +873,11 @@ struct
       | NEQ -> !extern_not (builtin_eq a b)
       | LT  -> !extern_not (builtin_leq b a)
     with Not_found ->
-      match cmp with
-      | EQ  -> c_eq a b
-      | NEQ -> c_neq a b
-      | LT  -> c_lt a b
-      | LEQ -> c_leq a b
+    match cmp with
+    | EQ  -> c_eq a b
+    | NEQ -> c_neq a b
+    | LT  -> c_lt a b
+    | LEQ -> c_leq a b
 
   let dispatch = function
     | NOT p -> !cached_not p.repr
@@ -1288,7 +1288,7 @@ struct
     type t = { mutable modif : bool ; polarity : p }
 
     let mark w = w.modif <- true ; w
-    
+
     let rec gen w hs ts =
       match hs with
       | [] -> ts
@@ -1313,14 +1313,14 @@ struct
       let w = { modif = false ; polarity } in
       let ws = gen w hs ts in
       if w.modif then ws else ts
-    
+
   end
-  
+
   let consequence_and = Consequence.(filter CONJ)
   let consequence_or  = Consequence.(filter DISJ)
-          
+
   let merge hs hs0 = List.sort_uniq compare_raising_absorbant (hs@hs0)
-                     
+
   let rec implication hs b = match b.repr with
     | Imply(hs0,b0) -> implication_imply hs b hs0 b0
     | And bs -> implication_and [] hs b bs
@@ -1329,10 +1329,10 @@ struct
   and implication_and hs0 hs b0 bs = try
       let hs'= merge hs0 hs in
       try 
-	match consequence_and hs bs with
-	| []  -> e_true (* [And hs] implies [b0] *)
-	| [b] -> implication hs' b
-	| bs' -> c_imply hs' (if bs'==bs then b0 else c_and bs')
+        match consequence_and hs bs with
+        | []  -> e_true (* [And hs] implies [b0] *)
+        | [b] -> implication hs' b
+        | bs' -> c_imply hs' (if bs'==bs then b0 else c_and bs')
       with Absorbant -> implication_false hs' (* [And hs] implies [Not b0] *)
     with Absorbant -> e_true (* [False = And (hs@hs0)] *)
   and implication_or hs0 hs b0 bs = try
@@ -1355,8 +1355,8 @@ struct
                 | _ -> c_imply (merge hs0 hs) b0
           with Absorbant -> e_true (* [False = And (hs@hs0)] *)
     with Absorbant -> (* [And hs] implies [Not b0] *)
-      try implication_false (merge hs hs0)
-      with Absorbant -> e_true  (* [False = And (hs@hs0)] *)
+    try implication_false (merge hs hs0)
+    with Absorbant -> e_true  (* [False = And (hs@hs0)] *)
   and implication_false hs =
     e_not (c_and hs)
 
@@ -1387,11 +1387,11 @@ struct
               | _,     false, [] -> b'
               | true,  false, _  -> c_imply xs' b'
               | false, _,     _  -> implication xs' b'
-           with Absorbant -> e_false
+            with Absorbant -> e_false
           end
-       end
+      end
     | _ -> x
-      
+
   let rec consequence h x = 
     let not_x = e_not x in
     match h.repr with
@@ -1579,7 +1579,7 @@ struct
     | _  when a == b -> e_true
     | _  when a == e_not b -> b
     | _, _ -> implication [a] b
-                
+
   let imply2 hs b =
     match b.repr with
     | And bs -> implication_and [] hs b bs
@@ -1605,7 +1605,7 @@ struct
           | [a] -> imply1 a p
           | _   -> imply2 hs p
         with Absorbant -> e_true
-          
+
   let () = cached_not := function
       | And xs -> e_or (List.map e_not xs)
       | Or  xs -> e_and (List.map e_not xs)
@@ -2332,7 +2332,7 @@ struct
         m.subterms (walk m (Bvars.order e.bind)) e
       end
     else mark m e
-  
+
   type defs = {
     mutable stack : term list ;
     mutable defined : Tset.t ;
@@ -2378,7 +2378,7 @@ struct
     | Sreal -> Real
     | Sbool -> Bool
     | Sprop | Sdata | Sarray _ -> raise Not_found
-                                    
+
   let tau_of_arraysort = function
     | Sarray s -> tau_of_sort s
     | _ -> raise Not_found
@@ -2390,11 +2390,11 @@ struct
     | Int , Int -> Int
     | (Int|Real) , (Int|Real) -> Real
     | _ -> raise Not_found
-             
+
   let rec merge_list t f = function
     | [] -> t
     | e::es -> merge_list (tau_merge t (f e)) f es
-  
+
   type env = {
     field : Field.t -> tau ;
     record : Field.t -> tau ;
@@ -2438,9 +2438,9 @@ struct
         | Eq _ | Neq _ | Leq _ | Lt _ | And _ | Or _ | Not _ | Imply _ -> Bool
         | Bind((Forall|Exists),_,_) -> Prop
         | Apply _ | Bind(Lambda,_,_) -> raise Not_found
-                 
+
   let undefined _ = raise Not_found
   let typeof ?(field=undefined) ?(record=undefined) ?(call=undefined) e =
     typecheck { field ; record ; call } e
-  
+
 end
