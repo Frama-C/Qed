@@ -1782,6 +1782,11 @@ struct
   let e_exists = bind_xs Exists
   let e_lambda = bind_xs Lambda
 
+  let rec binders e =
+    match e.repr with
+    | Bind(q,_,e) -> q :: binders e
+    | _ -> []
+
   (* -------------------------------------------------------------------------- *)
   (* --- Substitutions                                                      --- *)
   (* -------------------------------------------------------------------------- *)
@@ -2267,6 +2272,25 @@ struct
 
   let size e =
     let k = ref 0 in count k (ref Tset.empty) e ; !k
+
+
+  (* ------------------------------------------------------------------------ *)
+  (* ---  Sub Term Test                                                   --- *)
+  (* ------------------------------------------------------------------------ *)
+
+  let rec scan_subterm m a e =
+    if a == e then raise Exit ;
+    if a.size <= e.size && not (Tset.mem e !m) then
+      begin
+        m := Tset.add e !m ;
+        if Vars.subset a.vars e.vars then
+          lc_iter (scan_subterm m a) e
+      end
+
+  let is_subterm a e =
+    (a == e) ||
+    try scan_subterm (ref Tset.empty) a e ; false
+    with Exit -> true
 
   (* ------------------------------------------------------------------------ *)
   (* ---  Shared Sub-Terms                                                --- *)

@@ -293,6 +293,9 @@ sig
   val lc_vars : term -> Bvars.t
   val lc_repr : bind -> term
 
+  val binders : term -> binder list
+  (** Returns the list of head binders *)
+
   (** {3 Recursion Scheme} *)
 
   val e_map  : pool -> (term -> term) -> term -> term
@@ -400,6 +403,11 @@ sig
 
   (** {2 Shared sub-terms} *)
 
+  val is_subterm : term -> term -> bool
+  (** Occurrence check. [is_subterm a b] returns [true] iff [a] is a subterm
+      of [b]. Optimized {i wrt} shared subterms, term size, and term
+      variables. *)
+
   val shared :
     ?shared:(term -> bool) ->
     ?shareable:(term -> bool) ->
@@ -422,8 +430,8 @@ sig
       building marks, marking terms, and extracting definitions:
 
       {[ let share ?... e =
-           let m = marks ?... () in 
-           List.iter (mark m) es ; 
+           let m = marks ?... () in
+           List.iter (mark m) es ;
            defs m ]} *)
 
   type marks
