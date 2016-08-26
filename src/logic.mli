@@ -313,10 +313,10 @@ sig
       Parameterized by optional extractors for field and functions.
       Extractors may raise [Not_found] ; however, they are only used when
       the provided kinds for fields and functions are not precise enough.
-      @field type of a field value
-      @record type of the record containing a field
-      @call type of the values returned by the function
-      @raise [Not_found] if no type is found. *)
+      @param field type of a field value
+      @param record type of the record containing a field
+      @param call type of the values returned by the function
+      @raise Not_found if no type is found. *)
   val typeof :
     ?field:(Field.t -> tau) ->
     ?record:(Field.t -> tau) ->
