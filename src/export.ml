@@ -182,7 +182,7 @@ struct
   let find_fvar v lnk =
     try VarMap.find v lnk.fvars
     with Not_found ->
-      Plib.failure "Unbound variable %a" Var.pretty v
+      Plib.sprintf "#{%a}" Var.pretty v
 
   let bind_term x t lnk =
     begin
