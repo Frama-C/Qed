@@ -939,7 +939,7 @@ struct
   (* --- Negation                                                           --- *)
   (* -------------------------------------------------------------------------- *)
 
-  let e_not p =
+  let rec e_not p =
     match p.repr with
     | True -> e_false
     | False -> e_true
@@ -949,6 +949,8 @@ struct
     | Neq(x,y) -> c_eq x y
     | Not x -> x
     | (And _ | Or _ | Imply _) -> operation (NOT p)
+    | Bind(Forall,t,p) -> c_bind Exists t (e_not p)
+    | Bind(Exists,t,p) -> c_bind Forall t (e_not p)
     | _ -> c_not p
 
   let () = extern_not := e_not
@@ -1586,7 +1588,7 @@ struct
     | _ -> try
           match consequence_and hs [b] with
           | [] -> e_true (* [And hs] implies [b] *)
-          | _  -> 
+          | _  ->
               match b.repr with
               | Or bs -> implication_or [] hs b bs
               | Imply(hs0,b0) -> implication_imply hs b hs0 b0
@@ -1596,7 +1598,7 @@ struct
   let e_imply hs p =
     match p.repr with
     | True -> e_true
-    | _ -> 
+    | _ ->
         try
           let hs = fold_and [] hs in
           let hs = List.sort_uniq compare_raising_absorbant hs in
