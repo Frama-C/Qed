@@ -638,12 +638,9 @@ struct
   let state = ref (empty ())
   let get_state () = !state
   let set_state st = state := st
-  let clr_state st =
-    begin
-      C.clear st.cache ;
-      st.checks <- Tmap.empty ;
-    end
-  let release () = clr_state !state
+  let release () =
+      C.clear !state.cache ;
+      !state.checks <- Tmap.empty
 
   let clock = ref true
   let constants = ref Tset.empty
@@ -656,6 +653,18 @@ struct
       let add s c = W.add s.weak c ; s.kid <- max s.kid (succ c.id) in
       Tset.iter (add s) !constants ; s
     end
+
+  let clr_state st =
+    st.kid <- 0 ;
+    W.clear st.weak;
+    C.clear st.cache;
+    st.checks <- Tmap.empty;
+    st.builtins_fun <- BUILTIN.empty ;
+    st.builtins_eq  <- BUILTIN.empty ;
+    st.builtins_leq <- BUILTIN.empty ;
+    let add s c = W.add s.weak c ; s.kid <- max s.kid (succ c.id) in
+    Tset.iter (add st) !constants
+
 
   (* -------------------------------------------------------------------------- *)
   (* --- Hconsed insertion                                                  --- *)
