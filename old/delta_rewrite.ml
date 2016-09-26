@@ -60,7 +60,7 @@ struct
   let redex_id ((k,_,_):redex) = k
 
   let crule env rw =
-    let vars = Array.create rw.pvars [] in
+    let vars = Array.make rw.pvars [] in
     let redex = credex env (ref 0) vars rw.pattern in
     let rid = redex_id redex in
     let rules = try Intmap.find rid env.rules with Not_found -> [] in
@@ -83,7 +83,7 @@ struct
 	let m = Array.length ys in
 	if m = 0 then Some xs else
 	  let k = max n m in
-	  let zs = Array.create k None in
+	  let zs = Array.make k None in
 	  try
 	    for i = 0 to k-1 do
 	      let x = if i < n then xs.(i) else None in
@@ -97,7 +97,7 @@ struct
 	  with Exit -> None
 
     let bind i x : t =
-      let e = Array.create (succ i) None in
+      let e = Array.make (succ i) None in
       e.(i) <- Some x ; e
 
     let map f es : t = Array.map (function Some e -> Some (f e) | None -> None) es
