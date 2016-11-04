@@ -98,7 +98,7 @@ struct
 	
   let alloc s n =
     let k = Array.length s.mgu in
-    let m = Array.create n Top in
+    let m = Array.make n Top in
     s.mgu <- Array.append s.mgu m ; k-1
 
   let of_tau s t = let k = alloc s (Kind.degree_of_tau t) in shift k t

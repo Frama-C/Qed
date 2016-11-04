@@ -53,7 +53,7 @@ struct
 	    | Pany | Pvar _ | Pint _ | Ptrue | Pfalse -> raise Not_found
 	    | Pfun(_,ps) ->
 		let env = unify 
-		  (Array.create r.pvars None)
+		  (Array.make r.pvars None)
 		  (List.combine ps xs) in
 		begin
 		  match T.repr (compute r.guard env) with
@@ -74,7 +74,7 @@ struct
     try begin
       let subterm = T.subterm term position in
       try
-        let env = unify (Array.create r.pvars None) [r.pattern, subterm] in
+        let env = unify (Array.make r.pvars None) [r.pattern, subterm] in
         let guard = compute r.guard env in
         let simpl = compute r.value env in
         let term = T.change_subterm term position simpl in
