@@ -30,6 +30,7 @@ type 'a element =
   | E_false
   | E_int of int
   | E_const of 'a
+  | E_fun of 'a * 'a element list
 
 (** Algebraic properties for user operators. *)
 type 'a operator = {
