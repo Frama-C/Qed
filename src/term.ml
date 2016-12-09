@@ -2424,7 +2424,7 @@ struct
   type env = {
     field : Field.t -> tau ;
     record : Field.t -> tau ;
-    call : Fun.t -> tau ;
+    call : Fun.t -> tau option list -> tau ;
   }
 
   let rec typecheck env e =
@@ -2441,9 +2441,9 @@ struct
             (try typecheck env m
              with Not_found ->
                Array(typecheck env k,typecheck env v))
-        | Fun(f,_) ->
+        | Fun(f,es) ->
             (try tau_of_sort (Fun.sort f)
-             with Not_found -> env.call f)
+             with Not_found -> env.call f (List.map (typeof env) es))
         | Aget(m,_) ->
             (try match typecheck env m with
                | Array(_,v) -> v
@@ -2465,6 +2465,8 @@ struct
         | Bind((Forall|Exists),_,_) -> Prop
         | Apply _ | Bind(Lambda,_,_) -> raise Not_found
 
+  and typeof env e = try Some (typecheck env e) with Not_found -> None
+  
   let undefined _ = raise Not_found
   let typeof ?(field=undefined) ?(record=undefined) ?(call=undefined) e =
     typecheck { field ; record ; call } e
