@@ -93,7 +93,7 @@ sig
   val unfold : t -> term -> unit
   val shared : t -> term -> bool
   val shareable : t -> term -> bool (** not unfolded *)
-  val lookup : t -> term -> scope
+  val force_index : t -> unit
 end
 
 (** Generic Engine Signature *)

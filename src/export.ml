@@ -110,6 +110,7 @@ struct
   module Users = Set.Make(String)
 
   type allocator = {
+    mutable short : bool ;
     mutable base : string -> string ;
     mutable index : int Ident.t ;
     mutable fvars : string VarMap.t ;
@@ -123,6 +124,7 @@ struct
 
   let create_alloc base = {
     base ;
+    short = true ;
     index = Ident.empty ;
     fvars = VarMap.empty ;
     bvars = Intmap.empty ;
@@ -143,6 +145,7 @@ struct
 
   let copy_alloc lnk = {
     base = lnk.base ;
+    short = lnk.short ;
     index = lnk.index ;
     fvars = lnk.fvars ;
     bvars = lnk.bvars ;
@@ -153,7 +156,7 @@ struct
 
   let rec find_fresh ~suggest lnk basename k =
     let x =
-      if k=0 && String.length basename = 1 then basename
+      if k=0 && lnk.short && String.length basename = 1 then basename
       else Printf.sprintf "%s_%d" basename k in
     if Users.mem x lnk.users then
       find_fresh ~suggest lnk basename (succ k)
@@ -216,6 +219,7 @@ struct
         if Tset.mem t lnk.unzip then `Unfolded else `Auto
     let shared lnk t = Tmap.mem t lnk.share
     let shareable lnk t = not (Tset.mem t lnk.unzip)
+    let force_index lnk = lnk.short <- false ;
   end
 
   (* -------------------------------------------------------------------------- *)
