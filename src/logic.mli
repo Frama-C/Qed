@@ -320,7 +320,7 @@ sig
   val typeof :
     ?field:(Field.t -> tau) ->
     ?record:(Field.t -> tau) ->
-    ?call:(Fun.t -> tau) -> term -> tau
+    ?call:(Fun.t -> tau option list -> tau) -> term -> tau
 
   (** {3 Support for Builtins} *)
 
