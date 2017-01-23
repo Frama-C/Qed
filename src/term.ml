@@ -2393,8 +2393,8 @@ struct
   let marks ?(shared=none) ?(shareable=all) ?(subterms=lc_iter) () =
     {
       shareable ; subterms ;
-      marked = shared ; (* allready shared are set to be marked *)
-      shared = Tset.empty ; (* accumulator initialy empty *)
+      marked = shared ; (* already shared are set to be marked *)
+      shared = Tset.empty ; (* accumulator initially empty *)
       mark = Tmap.empty ;
       roots = [] ;
     }

@@ -52,7 +52,7 @@ sig
 	    - when [Qi=forall x], check [Li=Lterm t],
 	    - when [Qi=exists x], check [Li=Lvar y] and [y] is fresh,
 	    - assume [P[xi:=Li]],
-	    - finaly prove goal with [Pgoal]. *)
+	    - finally prove goal with [Pgoal]. *)
 
     | Intro of link list * proof
 	(** [Intro(L1..Ln,Pgoal)]:
