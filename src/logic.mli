@@ -286,9 +286,9 @@ sig
   (** {3 Localy Nameless Representation} *)
 
   val lc_bind : var -> term -> bind (** Close [x] as a new bound variable *)
-  val lc_open : var -> bind -> term (** Instanciate top bound variable *)
+  val lc_open : var -> bind -> term (** Instantiate top bound variable *)
   val lc_open_term : term -> bind -> term
-  (** Instanciate top bound variable with the given term *)
+  (** Instantiate top bound variable with the given term *)
   val lc_closed : term -> bool
   val lc_closed_at : int -> term -> bool
   val lc_vars : term -> Bvars.t
