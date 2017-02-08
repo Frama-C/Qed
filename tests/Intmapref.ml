@@ -105,7 +105,7 @@ struct
       let n = a.(x lsr 1)
       in if x land 1 = 0 then n else f n
     in
-    let dkeys = (* extending dkeys array by replication on the hightest byte *)
+    let dkeys = (* extending dkeys array by replication on the highest byte *)
       let bytes = match Sys.word_size with
 	| 32 -> 4
 	| 64 -> 8 
@@ -137,7 +137,7 @@ struct
 
 end
 
-module type Maping =
+module type Mapping =
 sig
   
   type 'a t
@@ -147,7 +147,7 @@ sig
 
 end
 
-module Oracle(M1 : Maping)(M2 : Maping) =
+module Oracle(M1 : Mapping)(M2 : Mapping) =
 struct
 
   let timed = ref None

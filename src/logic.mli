@@ -34,7 +34,7 @@ type 'a element =
 
 (** Algebraic properties for user operators. *)
 type 'a operator = {
-  inversible : bool ; (* x+y = x+z <-> y=z (on both side) *)
+  invertible : bool ; (* x+y = x+z <-> y=z (on both side) *)
   associative : bool ; (* x+(y+z)=(x+y)+z *)
   commutative : bool ; (* x+y=y+x *)
   idempotent : bool ; (* x+x = x *)
@@ -283,7 +283,7 @@ sig
   val e_subst : ?sigma:sigma -> (term -> term) -> term -> term
   val e_subst_var : var -> term -> term -> term
 
-  (** {3 Localy Nameless Representation} *)
+  (** {3 Locally Nameless Representation} *)
 
   val lc_bind : var -> term -> bind (** Close [x] as a new bound variable *)
   val lc_open : var -> bind -> term (** Instantiate top bound variable *)
@@ -359,7 +359,7 @@ sig
   (** {3 Specific Patterns} *)
 
   val consequence : term -> term -> term
-  (** Kowning [h], [consequence h a] returns [b] such that [h -> (a<->b)] *)
+  (** Knowing [h], [consequence h a] returns [b] such that [h -> (a<->b)] *)
   val literal : term -> bool * term
   val congruence_eq : term -> term -> (term * term) list option
   (** If [congruence_eq a b] returns [[ai,bi]], [a=b] is equivalent to [And{ai=bi}]. *)

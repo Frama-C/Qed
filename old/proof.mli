@@ -59,7 +59,7 @@ sig
 	    - check goal is [Q1,..,Qn.P],
 	    - when [Qi=forall xi], check [Li=Lvar y] and [y] is fresh,
 	    - when [Qi=exists xi], check [Li=Lterm t],
-	    - finally prove [P[xi:=Li]] witrh [Pgoal]. *)
+	    - finally prove [P[xi:=Li]] with [Pgoal]. *)
 
     | Induction of T.term * proof * proof * T.var * proof
 	(** [Induction(a,Ppos,Pinit,n,Pind)]:

@@ -34,7 +34,7 @@ sig
 
 end
 
-(** A Theory for arythmetics comparisons *)
+(** A Theory for arithmetic comparisons *)
 module Make(T : Term)(D : Domain) :
 sig
 

@@ -353,7 +353,7 @@ struct
     List.iter (fun e -> fprintf fmt "%s@,%a" op (pp_atom env) e) es
 
   (* -------------------------------------------------------------------------- *)
-  (* --- Horizonal Boxes                                                    --- *)
+  (* --- Horizontal Boxes                                                   --- *)
   (* -------------------------------------------------------------------------- *)
 
   and pp_hbox (env:env) (sep:string) (fmt:formatter) = function
