@@ -992,18 +992,23 @@ struct
           else modified,xs,ys
     in simpl false true xs ys
 
-  let element = function
+  let rec element = function
     | E_none -> assert false
     | E_int k -> e_int k
     | E_true -> e_true
     | E_false -> e_false
     | E_const f -> c_fun f []
+    | E_fun (f,l) -> c_fun f (List.map element l)
 
-  let is_element e x = match e , x.repr with
+  let rec is_element e x = match e , x.repr with
     | E_int k , Kint z -> Z.equal (Z.of_int k) z
     | E_true , True -> true
     | E_false , False -> false
     | E_const f , Fun(g,[]) -> Fun.equal f g
+    | E_fun (f,fl) , Fun(g,gl) ->
+        Fun.equal f g &&
+        List.length fl = List.length gl &&
+        List.for_all2 is_element fl gl
     | _ -> false
 
   let isnot_element e x = not (is_element e x)
@@ -2388,8 +2393,8 @@ struct
   let marks ?(shared=none) ?(shareable=all) ?(subterms=lc_iter) () =
     {
       shareable ; subterms ;
-      marked = shared ; (* allready shared are set to be marked *)
-      shared = Tset.empty ; (* accumulator initialy empty *)
+      marked = shared ; (* already shared are set to be marked *)
+      shared = Tset.empty ; (* accumulator initially empty *)
       mark = Tmap.empty ;
       roots = [] ;
     }

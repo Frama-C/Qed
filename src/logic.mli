@@ -30,6 +30,7 @@ type 'a element =
   | E_false
   | E_int of int
   | E_const of 'a
+  | E_fun of 'a * 'a element list
 
 (** Algebraic properties for user operators. *)
 type 'a operator = {
@@ -285,9 +286,9 @@ sig
   (** {3 Localy Nameless Representation} *)
 
   val lc_bind : var -> term -> bind (** Close [x] as a new bound variable *)
-  val lc_open : var -> bind -> term (** Instanciate top bound variable *)
+  val lc_open : var -> bind -> term (** Instantiate top bound variable *)
   val lc_open_term : term -> bind -> term
-  (** Instanciate top bound variable with the given term *)
+  (** Instantiate top bound variable with the given term *)
   val lc_closed : term -> bool
   val lc_closed_at : int -> term -> bool
   val lc_vars : term -> Bvars.t
@@ -419,7 +420,7 @@ sig
       	The list of shared subterms is consistent with
       	order of definition: each trailing terms only depend on heading ones.
 
-      	The traversal is controled by two optional arguments:
+      	The traversal is controlled by two optional arguments:
       	- [shared] those terms are not traversed (considered as atomic, default to none)
       	- [shareable] those terms ([is_simple] excepted) that can be shared (default to all)
       	- [subterms] those sub-terms a term to be considered during
@@ -448,7 +449,7 @@ sig
   (** Mark a term to be printed *)
   val mark : marks -> term -> unit
 
-  (** Mark a term to be explicitely shared *)
+  (** Mark a term to be explicitly shared *)
   val share : marks -> term -> unit
 
   (** Returns a list of terms to be shared among all {i shared} or {i
