@@ -17,7 +17,7 @@ open Syntax
 
    {3 Strategy and Tactics}
    Tactics can be used as strategy.
-   - [ strategy := ("case" H: script)+ ("otherwize": script)? ]
+   - [ strategy := ("case" H: script)+ ("otherwise": script)? ]
    - [ tactic := "straightforward" ]
    - [ tactic := "by" theorem ]
 

@@ -981,7 +981,7 @@ struct
     | [_] as l -> l
     | x::( (y::_) as w ) -> if x==y then op_idempotent w else x :: op_idempotent w
 
-  let op_inversible xs ys =
+  let op_invertible xs ys =
     let rec simpl modified turn xs ys = match xs , ys with
       | x::xs , y::ys when x==y -> simpl true turn xs ys
       | _ ->
@@ -1422,7 +1422,7 @@ struct
     | S_equal        (* equal constants or constructors *)
     | S_disequal     (* different constants or constructors *)
     | S_injection    (* same function, injective or constructor *)
-    | S_inversible   (* same function, inversible on both side *)
+    | S_invertible   (* same function, invertible on both side *)
     | S_disjunction  (* both constructors, but different ones *)
     | S_functions    (* general functions *)
 
@@ -1430,7 +1430,7 @@ struct
     if Fun.equal f g then
       match Fun.category f with
       | Logic.Injection -> S_injection
-      | Logic.Operator { inversible=true } -> S_inversible
+      | Logic.Operator { invertible=true } -> S_invertible
       | Logic.Constructor -> S_equal
       | Logic.Function | Logic.Operator _ -> S_functions
     else
@@ -1506,8 +1506,8 @@ struct
           | S_injection -> eq_maybe x y (eq_all e_eq xs ys)
           | S_disjunction -> e_false
           | S_functions -> c_builtin_eq x y
-          | S_inversible ->
-              let modified,xs,ys = op_inversible xs ys in
+          | S_invertible ->
+              let modified,xs,ys = op_invertible xs ys in
               if modified
               then c_builtin_eq (e_fun f xs) (e_fun g ys)
               else c_builtin_eq x y
@@ -1552,8 +1552,8 @@ struct
           | S_injection -> neq_maybe x y (neq_any e_neq xs ys)
           | S_disjunction -> e_true
           | S_functions -> c_builtin_neq x y
-          | S_inversible ->
-              let modified,xs,ys = op_inversible xs ys in
+          | S_invertible ->
+              let modified,xs,ys = op_invertible xs ys in
               if modified
               then c_builtin_neq (e_fun f xs) (e_fun g ys)
               else c_builtin_neq x y
@@ -1894,7 +1894,7 @@ struct
     | Fun(f,xs) , Fun(g,ys) ->
         begin
           match structural f g with
-          | S_equal | S_disequal | S_disjunction | S_inversible -> []
+          | S_equal | S_disequal | S_disjunction | S_invertible -> []
           | S_injection -> concat2 congr_argeq xs ys
           | S_functions -> raise NO_CONGRUENCE
         end
@@ -1912,7 +1912,7 @@ struct
     | Fun(f,xs) , Fun(g,ys) ->
         begin
           match structural f g with
-          | S_equal | S_disequal | S_disjunction | S_inversible -> []
+          | S_equal | S_disequal | S_disjunction | S_invertible -> []
           | S_injection -> concat2 congr_argneq xs ys
           | S_functions -> raise NO_CONGRUENCE
         end
@@ -1956,7 +1956,7 @@ struct
           | S_disequal -> e_false
           | S_injection -> e_all2 flat_eq xs ys
           | S_disjunction -> e_false
-          | S_functions | S_inversible -> e_eq a b
+          | S_functions | S_invertible -> e_eq a b
         end
     | Rdef fxs , Rdef gys ->
         begin
@@ -1976,7 +1976,7 @@ struct
           | S_disequal -> e_true
           | S_injection -> e_any2 flat_neq xs ys
           | S_disjunction -> e_true
-          | S_functions | S_inversible -> e_neq a b
+          | S_functions | S_invertible -> e_neq a b
         end
     | Rdef fxs , Rdef gys ->
         begin

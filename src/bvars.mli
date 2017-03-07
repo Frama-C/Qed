@@ -45,7 +45,7 @@ val is_empty : t -> bool
 (** No bound variables *)
 
 val contains : int -> t -> bool
-(** if [may_constains k s] returns [false] then [k] does not belong to [s] *)
+(** if [contains k s] returns [false] then [k] does not belong to [s] *)
 
 val overlap : int -> int -> t -> bool
 (** if [may_overlap k n s] returns [false] then no variable [i] with

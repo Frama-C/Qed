@@ -29,7 +29,7 @@ sig
     (** The class of [t] is the singleton [t]. *)
 
   val compute : eqs -> term -> term
-    (** Recursively replace sub-terms by their representent. 
+    (** Recursively replace sub-terms by their representant.
 	@raise Contradiction if computation introduce inequalities. *)
 
   val are_equal : eqs -> term -> term -> maybe
@@ -40,7 +40,7 @@ sig
 
   val assume : eqs -> term -> eqs
     (** Add a new hypothesis [h].
-	If [h] is a [a=b], merges [a] and [b]. Otherwize,
+	If [h] is a [a=b], merges [a] and [b]. Otherwise,
 	merges [h] with [true] and [not h] with [false]. 
 	@raise Contradiction if the computations introduce non-equal terms. *)
 

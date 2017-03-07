@@ -45,8 +45,8 @@ sig
 
   val simplify : T.term simplifier list -> T.term -> T.term
     (** Might raises [NoSolution] from a plugin at initialization
-	stage.  Otherwize, [NoSolution] exceptions are likely to be
-	catched during simplification, hence pruning any contradictory
+	stage.  Otherwise, [NoSolution] exceptions are likely to be
+	caught during simplification, hence pruning any contradictory
 	hypothesis. *)
 
 end
