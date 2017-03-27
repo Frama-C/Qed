@@ -1419,23 +1419,20 @@ struct
     | _      -> consequence_aux [h] x
 
   type structural =
-    | S_equal        (* equal constants or constructors *)
-    | S_disequal     (* different constants or constructors *)
-    | S_injection    (* same function, injective or constructor *)
-    | S_invertible   (* same function, invertible on both side *)
-    | S_disjunction  (* both constructors, but different ones *)
+    | S_diff         (* different constructors *)
+    | S_injection    (* same injective function *)
+    | S_invertible   (* same invertible function *)
     | S_functions    (* general functions *)
 
   let structural f g =
     if Fun.equal f g then
       match Fun.category f with
-      | Logic.Injection -> S_injection
       | Logic.Operator { invertible=true } -> S_invertible
-      | Logic.Constructor -> S_equal
+      | Logic.Injection | Logic.Constructor -> S_injection
       | Logic.Function | Logic.Operator _ -> S_functions
     else
       match Fun.category f , Fun.category g with
-      | Logic.Constructor , Logic.Constructor -> S_disequal
+      | Logic.Constructor , Logic.Constructor -> S_diff
       | _ -> S_functions
 
   let contrary x y = (is_prop x || is_prop y) && (e_not x == y)
@@ -1501,10 +1498,8 @@ struct
     | Fun(f,xs) , Fun(g,ys) ->
         begin
           match structural f g with
-          | S_equal -> e_true
-          | S_disequal -> e_false
+          | S_diff -> e_false
           | S_injection -> eq_maybe x y (eq_all e_eq xs ys)
-          | S_disjunction -> e_false
           | S_functions -> c_builtin_eq x y
           | S_invertible ->
               let modified,xs,ys = op_invertible xs ys in
@@ -1547,10 +1542,8 @@ struct
     | Fun(f,xs) , Fun(g,ys) ->
         begin
           match structural f g with
-          | S_equal -> e_false
-          | S_disequal -> e_true
+          | S_diff -> e_true
           | S_injection -> neq_maybe x y (neq_any e_neq xs ys)
-          | S_disjunction -> e_true
           | S_functions -> c_builtin_neq x y
           | S_invertible ->
               let modified,xs,ys = op_invertible xs ys in
@@ -1894,9 +1887,9 @@ struct
     | Fun(f,xs) , Fun(g,ys) ->
         begin
           match structural f g with
-          | S_equal | S_disequal | S_disjunction | S_invertible -> []
+          | S_diff -> []
           | S_injection -> concat2 congr_argeq xs ys
-          | S_functions -> raise NO_CONGRUENCE
+          | S_functions | S_invertible -> raise NO_CONGRUENCE
         end
     | Rdef fxs , Rdef gys -> concat2 congr_fieldeq fxs gys
     | _ -> raise NO_CONGRUENCE
@@ -1912,9 +1905,9 @@ struct
     | Fun(f,xs) , Fun(g,ys) ->
         begin
           match structural f g with
-          | S_equal | S_disequal | S_disjunction | S_invertible -> []
+          | S_diff -> []
           | S_injection -> concat2 congr_argneq xs ys
-          | S_functions -> raise NO_CONGRUENCE
+          | S_functions | S_invertible -> raise NO_CONGRUENCE
         end
     | Rdef fxs , Rdef gys ->
         begin
@@ -1952,10 +1945,8 @@ struct
     | Fun(f,xs) , Fun(g,ys) ->
         begin
           match structural f g with
-          | S_equal -> e_true
-          | S_disequal -> e_false
+          | S_diff -> e_false
           | S_injection -> e_all2 flat_eq xs ys
-          | S_disjunction -> e_false
           | S_functions | S_invertible -> e_eq a b
         end
     | Rdef fxs , Rdef gys ->
@@ -1972,10 +1963,8 @@ struct
     | Fun(f,xs) , Fun(g,ys) ->
         begin
           match structural f g with
-          | S_equal -> e_false
-          | S_disequal -> e_true
+          | S_diff -> e_true
           | S_injection -> e_any2 flat_neq xs ys
-          | S_disjunction -> e_true
           | S_functions | S_invertible -> e_neq a b
         end
     | Rdef fxs , Rdef gys ->
