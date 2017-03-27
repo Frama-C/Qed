@@ -361,13 +361,7 @@ sig
   val consequence : term -> term -> term
   (** Knowing [h], [consequence h a] returns [b] such that [h -> (a<->b)] *)
   val literal : term -> bool * term
-  val congruence_eq : term -> term -> (term * term) list option
-  (** If [congruence_eq a b] returns [[ai,bi]], [a=b] is equivalent to [And{ai=bi}]. *)
-  val congruence_neq : term -> term -> (term * term) list option
-  (** If [congruence_eq a b] returns [[ai,bi]], [a<>b] is equivalent to [Or{ai<>bi}]. *)
-  val flattenable : term -> bool
-  val flattens : term -> term -> bool (** The comparison flattens *)
-  val flatten : term -> term list (** Returns an equivalent conjunction *)
+
   val affine : term -> (Z.t,term) affine
   val record_with : record -> (term * record) option
 
