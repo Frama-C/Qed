@@ -1,6 +1,6 @@
-# Qed
+# First Order Logic with Theories
 
-Qed is an [OCaml](http://ocaml.org) library implementing first-order logic with built-in theories.
+**Qed** is an [OCaml](http://ocaml.org) library implementing first-order logic with built-in theories.
 It is developped by CEA-Tech in the Sofware Reliability and Security Lab, and shiped with the [Frama-C](http://frama-c.com) platform 
 for proving ACSL contracts by Weakest-Precondition (WP).
 
@@ -38,10 +38,3 @@ $ make doc
 ```
 
 The entry point is at `qed.docdir/index.html`, see modules `Logic` and `Term` to start with.
-
-## License
-
-The Qed Library is distributed under the Gnu Lesser General Public License,
-version 2.1, a [copy](licenses/LGPLv2.1) of which is available in the repository.
-
-Copyright **CEA Tech** 2009.

@@ -62,7 +62,7 @@ doc: src/$(PKG).odocl
 		-docflag -t -docflag "$(NAME) Library" \
 		-docflag -short-functors \
 		src/$(PKG).docdir/index.html
-	@cp -f ceatech.css _build/src/$(PKG).docdir/style.css
+	@cp -f licenses/ceatech.css _build/src/$(PKG).docdir/style.css
 	@echo "Documentation at $(PWD)/qed.docdir/index.html"
 
 src/$(PKG).odocl: src/$(PKG).mlpack
