@@ -1,9 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
-(*  This file is part of WP plug-in of Frama-C.                           *)
+(*  This file is part of Qed Library                                      *)
 (*                                                                        *)
-(*  Copyright (C) 2007-2017                                               *)
-(*    CEA (Commissariat a l'energie atomique et aux energies              *)
+(*  Copyright (C) 2007-2016                                               *)
+(*    CEA (Commissariat à l'énergie atomique et aux énergies              *)
 (*         alternatives)                                                  *)
 (*                                                                        *)
 (*  you can redistribute it and/or modify it under the terms of the GNU   *)
@@ -651,8 +651,8 @@ struct
   let get_state () = !state
   let set_state st = state := st
   let release () =
-      C.clear !state.cache ;
-      !state.checks <- Tmap.empty
+    C.clear !state.cache ;
+    !state.checks <- Tmap.empty
 
   let clock = ref true
   let constants = ref Tset.empty
@@ -1502,9 +1502,9 @@ struct
           try e_all2 eq_field fxs gys
           with Exit -> e_false
         end
-        
+
     | _ when contrary x y -> e_false
-      
+
     | Fun _ , _ | _ , Fun _ -> c_builtin_eq x y
     | _ -> c_eq x y
 
@@ -1546,9 +1546,9 @@ struct
           try e_any2 neq_field fxs gys
           with Exit -> e_true
         end
-        
+
     | _ when contrary x y -> e_true
-      
+
     | Fun _ , _ | _ , Fun _ -> c_builtin_neq x y
     | _ -> c_neq x y
 
@@ -2336,7 +2336,7 @@ struct
         | Apply _ | Bind(Lambda,_,_) -> raise Not_found
 
   and typeof env e = try Some (typecheck env e) with Not_found -> None
-  
+
   let undefined _ = raise Not_found
   let typeof ?(field=undefined) ?(record=undefined) ?(call=undefined) e =
     typecheck { field ; record ; call } e
