@@ -1,9 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
-(*  This file is part of WP plug-in of Frama-C.                           *)
+(*  This file is part of Qed Library                                      *)
 (*                                                                        *)
-(*  Copyright (C) 2007-2017                                               *)
-(*    CEA (Commissariat a l'energie atomique et aux energies              *)
+(*  Copyright (C) 2007-2016                                               *)
+(*    CEA (Commissariat à l'énergie atomique et aux énergies              *)
 (*         alternatives)                                                  *)
 (*                                                                        *)
 (*  you can redistribute it and/or modify it under the terms of the GNU   *)
@@ -651,8 +651,8 @@ struct
   let get_state () = !state
   let set_state st = state := st
   let release () =
-      C.clear !state.cache ;
-      !state.checks <- Tmap.empty
+    C.clear !state.cache ;
+    !state.checks <- Tmap.empty
 
   let clock = ref true
   let constants = ref Tset.empty
