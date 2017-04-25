@@ -453,7 +453,7 @@ struct
       | Times _ , _ -> (-1)
       | _ , Times _ -> 1
 
-      | Not x , Not y ->           
+      | Not x , Not y ->
           let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
             phi x y
@@ -470,7 +470,7 @@ struct
       | Add xs , Add ys
       | Mul xs , Mul ys
       | And xs , And ys
-      | Or xs , Or ys ->           
+      | Or xs , Or ys ->
           let cmp = cmp_size a b in
           if cmp <> 0 then cmp else
             Hcons.compare_list phi xs ys
@@ -650,12 +650,9 @@ struct
   let state = ref (empty ())
   let get_state () = !state
   let set_state st = state := st
-  let clr_state st =
-    begin
-      C.clear st.cache ;
-      st.checks <- Tmap.empty ;
-    end
-  let release () = clr_state !state
+  let release () =
+    C.clear !state.cache ;
+    !state.checks <- Tmap.empty
 
   let clock = ref true
   let constants = ref Tset.empty
@@ -668,6 +665,18 @@ struct
       let add s c = W.add s.weak c ; s.kid <- max s.kid (succ c.id) in
       Tset.iter (add s) !constants ; s
     end
+
+  let clr_state st =
+    st.kid <- 0 ;
+    W.clear st.weak;
+    C.clear st.cache;
+    st.checks <- Tmap.empty;
+    st.builtins_fun <- BUILTIN.empty ;
+    st.builtins_eq  <- BUILTIN.empty ;
+    st.builtins_leq <- BUILTIN.empty ;
+    let add s c = W.add s.weak c ; s.kid <- max s.kid (succ c.id) in
+    Tset.iter (add st) !constants
+
 
   (* -------------------------------------------------------------------------- *)
   (* --- Hconsed insertion                                                  --- *)
@@ -939,7 +948,7 @@ struct
   (* --- Negation                                                           --- *)
   (* -------------------------------------------------------------------------- *)
 
-  let e_not p =
+  let rec e_not p =
     match p.repr with
     | True -> e_false
     | False -> e_true
@@ -949,6 +958,8 @@ struct
     | Neq(x,y) -> c_eq x y
     | Not x -> x
     | (And _ | Or _ | Imply _) -> operation (NOT p)
+    | Bind(Forall,t,p) -> c_bind Exists t (e_not p)
+    | Bind(Exists,t,p) -> c_bind Forall t (e_not p)
     | _ -> c_not p
 
   let () = extern_not := e_not
@@ -970,7 +981,7 @@ struct
     | [_] as l -> l
     | x::( (y::_) as w ) -> if x==y then op_idempotent w else x :: op_idempotent w
 
-  let op_inversible xs ys =
+  let op_invertible xs ys =
     let rec simpl modified turn xs ys = match xs , ys with
       | x::xs , y::ys when x==y -> simpl true turn xs ys
       | _ ->
@@ -981,18 +992,23 @@ struct
           else modified,xs,ys
     in simpl false true xs ys
 
-  let element = function
+  let rec element = function
     | E_none -> assert false
     | E_int k -> e_int k
     | E_true -> e_true
     | E_false -> e_false
     | E_const f -> c_fun f []
+    | E_fun (f,l) -> c_fun f (List.map element l)
 
-  let is_element e x = match e , x.repr with
+  let rec is_element e x = match e , x.repr with
     | E_int k , Kint z -> Z.equal (Z.of_int k) z
     | E_true , True -> true
     | E_false , False -> false
     | E_const f , Fun(g,[]) -> Fun.equal f g
+    | E_fun (f,fl) , Fun(g,gl) ->
+        Fun.equal f g &&
+        List.length fl = List.length gl &&
+        List.for_all2 is_element fl gl
     | _ -> false
 
   let isnot_element e x = not (is_element e x)
@@ -1406,7 +1422,7 @@ struct
     | S_equal        (* equal constants or constructors *)
     | S_disequal     (* different constants or constructors *)
     | S_injection    (* same function, injective or constructor *)
-    | S_inversible   (* same function, inversible on both side *)
+    | S_invertible   (* same function, invertible on both side *)
     | S_disjunction  (* both constructors, but different ones *)
     | S_functions    (* general functions *)
 
@@ -1414,7 +1430,7 @@ struct
     if Fun.equal f g then
       match Fun.category f with
       | Logic.Injection -> S_injection
-      | Logic.Operator { inversible=true } -> S_inversible
+      | Logic.Operator { invertible=true } -> S_invertible
       | Logic.Constructor -> S_equal
       | Logic.Function | Logic.Operator _ -> S_functions
     else
@@ -1490,8 +1506,8 @@ struct
           | S_injection -> eq_maybe x y (eq_all e_eq xs ys)
           | S_disjunction -> e_false
           | S_functions -> c_builtin_eq x y
-          | S_inversible ->
-              let modified,xs,ys = op_inversible xs ys in
+          | S_invertible ->
+              let modified,xs,ys = op_invertible xs ys in
               if modified
               then c_builtin_eq (e_fun f xs) (e_fun g ys)
               else c_builtin_eq x y
@@ -1536,8 +1552,8 @@ struct
           | S_injection -> neq_maybe x y (neq_any e_neq xs ys)
           | S_disjunction -> e_true
           | S_functions -> c_builtin_neq x y
-          | S_inversible ->
-              let modified,xs,ys = op_inversible xs ys in
+          | S_invertible ->
+              let modified,xs,ys = op_invertible xs ys in
               if modified
               then c_builtin_neq (e_fun f xs) (e_fun g ys)
               else c_builtin_neq x y
@@ -1586,7 +1602,7 @@ struct
     | _ -> try
           match consequence_and hs [b] with
           | [] -> e_true (* [And hs] implies [b] *)
-          | _  -> 
+          | _  ->
               match b.repr with
               | Or bs -> implication_or [] hs b bs
               | Imply(hs0,b0) -> implication_imply hs b hs0 b0
@@ -1596,7 +1612,7 @@ struct
   let e_imply hs p =
     match p.repr with
     | True -> e_true
-    | _ -> 
+    | _ ->
         try
           let hs = fold_and [] hs in
           let hs = List.sort_uniq compare_raising_absorbant hs in
@@ -1782,6 +1798,11 @@ struct
   let e_exists = bind_xs Exists
   let e_lambda = bind_xs Lambda
 
+  let rec binders e =
+    match e.repr with
+    | Bind(q,_,e) -> q :: binders e
+    | _ -> []
+
   (* -------------------------------------------------------------------------- *)
   (* --- Substitutions                                                      --- *)
   (* -------------------------------------------------------------------------- *)
@@ -1873,7 +1894,7 @@ struct
     | Fun(f,xs) , Fun(g,ys) ->
         begin
           match structural f g with
-          | S_equal | S_disequal | S_disjunction | S_inversible -> []
+          | S_equal | S_disequal | S_disjunction | S_invertible -> []
           | S_injection -> concat2 congr_argeq xs ys
           | S_functions -> raise NO_CONGRUENCE
         end
@@ -1891,7 +1912,7 @@ struct
     | Fun(f,xs) , Fun(g,ys) ->
         begin
           match structural f g with
-          | S_equal | S_disequal | S_disjunction | S_inversible -> []
+          | S_equal | S_disequal | S_disjunction | S_invertible -> []
           | S_injection -> concat2 congr_argneq xs ys
           | S_functions -> raise NO_CONGRUENCE
         end
@@ -1935,7 +1956,7 @@ struct
           | S_disequal -> e_false
           | S_injection -> e_all2 flat_eq xs ys
           | S_disjunction -> e_false
-          | S_functions | S_inversible -> e_eq a b
+          | S_functions | S_invertible -> e_eq a b
         end
     | Rdef fxs , Rdef gys ->
         begin
@@ -1955,7 +1976,7 @@ struct
           | S_disequal -> e_true
           | S_injection -> e_any2 flat_neq xs ys
           | S_disjunction -> e_true
-          | S_functions | S_inversible -> e_neq a b
+          | S_functions | S_invertible -> e_neq a b
         end
     | Rdef fxs , Rdef gys ->
         begin
@@ -2268,6 +2289,25 @@ struct
   let size e =
     let k = ref 0 in count k (ref Tset.empty) e ; !k
 
+
+  (* ------------------------------------------------------------------------ *)
+  (* ---  Sub Term Test                                                   --- *)
+  (* ------------------------------------------------------------------------ *)
+
+  let rec scan_subterm m a e =
+    if a == e then raise Exit ;
+    if a.size <= e.size && not (Tset.mem e !m) then
+      begin
+        m := Tset.add e !m ;
+        if Vars.subset a.vars e.vars then
+          lc_iter (scan_subterm m a) e
+      end
+
+  let is_subterm a e =
+    (a == e) ||
+    try scan_subterm (ref Tset.empty) a e ; false
+    with Exit -> true
+
   (* ------------------------------------------------------------------------ *)
   (* ---  Shared Sub-Terms                                                --- *)
   (* ------------------------------------------------------------------------ *)
@@ -2280,6 +2320,7 @@ struct
   type marks = {
     marked : (term -> bool) ;    (* context-letified terms *)
     shareable : (term -> bool) ; (* terms that can be shared *)
+    subterms : (term -> unit) -> term -> unit ; (* subterm iterator *)
     mutable mark : mark Tmap.t ; (* current marks during traversal *)
     mutable shared : Tset.t ;    (* marked several times *)
     mutable roots : term list ;  (* added as marked roots *)
@@ -2307,12 +2348,12 @@ struct
             else
               begin
                 set_mark m e FirstMark ;
-                lc_iter (walk m r) e ;
+                m.subterms (walk m r) e ;
               end
         | FirstMark ->
             if m.shareable e && lc_closed_at r e
             then m.shared <- Tset.add e m.shared
-            else lc_iter (walk m r) e ;
+            else m.subterms (walk m r) e ;
             set_mark m e Marked
         | Marked ->
             ()
@@ -2328,7 +2369,7 @@ struct
         m.roots <- e :: m.roots ;
         m.shared <- Tset.add e m.shared ;
         m.mark <- Tmap.add e Marked m.mark ;
-        lc_iter (walk m (Bvars.order e.bind)) e
+        m.subterms (walk m (Bvars.order e.bind)) e
       end
     else mark m e
 
@@ -2349,11 +2390,11 @@ struct
   let none = fun _ -> false
   let all = fun _ -> true
 
-  let marks ?(shared=none) ?(shareable=all) () =
+  let marks ?(shared=none) ?(shareable=all) ?(subterms=lc_iter) () =
     {
-      shareable ;
-      marked = shared ;
-      shared = Tset.empty ;
+      shareable ; subterms ;
+      marked = shared ; (* already shared are set to be marked *)
+      shared = Tset.empty ; (* accumulator initially empty *)
       mark = Tmap.empty ;
       roots = [] ;
     }
@@ -2363,8 +2404,8 @@ struct
     List.iter (collect m.shared defines) m.roots ;
     List.rev defines.stack
 
-  let shared ?shared ?shareable es =
-    let m = marks ?shared ?shareable () in
+  let shared ?shared ?shareable ?subterms es =
+    let m = marks ?shared ?shareable ?subterms () in
     List.iter (mark m) es ;
     defs m
 
