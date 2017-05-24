@@ -1,0 +1,12 @@
+(V1
+  ((
+    (name qed)
+    (deps(
+        (ocaml "" "")
+        (ocamlbuild "" "")
+        (ZArith "" "")
+    ))
+    (install ((make) (make install)))
+    (tests ((make doc)))
+  ))
+)
