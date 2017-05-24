@@ -182,7 +182,7 @@ struct
         | Cterm -> fprintf fmt "function %s" name
 
       method virtual pp_trigger : trigger printer
-      method virtual pp_intros : tau -> string list printer (* forall with no separatyor *)
+      method virtual pp_intros : tau -> string list printer (* forall with no separator *)
 
       method declare_prop ~kind fmt lemma xs tgs (p : term) =
         self#global
