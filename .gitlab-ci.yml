@@ -1,0 +1,13 @@
+qed-4.03:
+  script:
+  - ~oci/oci/bin/bf_client.native run --socket ~oci/data/oci-data/oci.socket --rootfs 1 --ocaml 4.03 --autogit qed qed
+  tags:
+  except:
+  - tags
+
+qed-4.04:
+  script:
+  - ~oci/oci/bin/bf_client.native run --socket ~oci/data/oci-data/oci.socket --rootfs 1 --ocaml 4.04 --autogit qed qed
+  tags:
+  except:
+  - tags
