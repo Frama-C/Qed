@@ -46,7 +46,7 @@ FLAGS=  -use-ocamlfind $(JOBS) \
 	-cflags -w,PSUZL+7,-warn-error,PSUZL+7 \
 	-cflags -for-pack,$(NAME)
 
-TARGETS= src/$(PKG).cmo src/$(PKG).cmx
+TARGETS= src/$(PKG).cmo src/$(PKG).cmx src/$(PKG).cmxs
 
 build:
 	@echo "Build Qed."
@@ -78,7 +78,7 @@ install:
 	@echo "Install Qed."
 	@if [ -e $(shell ocamlfind printconf destdir)/$(PKG) ] ;\
 	 then ocamlfind remove $(PKG) ; fi
-	@ocamlfind install $(PKG) META _build/src/$(PKG).cm* _build/src/$(PKG).o
+	@ocamlfind install $(PKG) META _build/src/$(PKG).cm* _build/src/$(PKG).a
 
 uninstall:
 	@echo "Uninstall Qed."
