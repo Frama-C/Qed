@@ -59,7 +59,7 @@ struct
 
       method! basename s =
         (** TODO: better uncapitalization of the first letter? utf8? *)
-        let lower0 = Char.lowercase_ascii s.[0] in
+        let lower0 = Char.lowercase s.[0] in
         if String.length s > 0 &&  lower0 <> s.[0] then
           let s = Bytes.of_string s in
           Bytes.set s 0 lower0 ;
