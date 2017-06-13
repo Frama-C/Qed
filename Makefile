@@ -46,7 +46,7 @@ FLAGS=  -use-ocamlfind $(JOBS) \
 	-cflags -w,PSUZL+7,-warn-error,PSUZL+7 \
 	-cflags -for-pack,$(NAME)
 
-TARGETS= $(addprefix src/$(PKG).,cmo cmx cmxs cmi a)
+TARGETS= $(addprefix src/$(PKG).,cmo cmx cmxa cmxs cmi a)
 
 build:
 	@echo "Build Qed."
