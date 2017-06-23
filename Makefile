@@ -95,4 +95,7 @@ headers:
 	headache -c licenses/header.config -h licenses/HEADER \
 		src/*.ml src/*.ml[iyl] Makefile
 	ocp-indent -i src/*.ml src/*.mli
+	opam lint ./opam
+	@grep "^name" opam
+	@grep "^version" opam META
 

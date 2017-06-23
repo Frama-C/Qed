@@ -1,5 +1,5 @@
+version= "0.2"
 description = "First Order Logic Modulo Simplifications"
-version = "0.1"
 requires = ""
 archive(byte) = "qed.cmo"
 archive(native) = "qed.cmxa"
