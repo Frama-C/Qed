@@ -59,6 +59,7 @@ FLAGS=  -use-ocamlfind $(JOBS) \
 
 doc: src/$(PKG).odocl
 	@echo "Generating '$(NAME)' documentation"
+	@jbuilder clean
 	@ocamlbuild $(DEPENDS) $(FLAGS) \
 		-build-dir _doc 	\
 		-docflag -t -docflag "$(NAME) Library" \
