@@ -70,7 +70,7 @@ doc: src/$(PKG).odocl
 clean:
 	@echo "Cleaning"
 	@jbuilder clean
-	@rm -f _doc
+	@rm -fr _doc
 
 headers:
 	headache -c licenses/header.config -h licenses/HEADER \
