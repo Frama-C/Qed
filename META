@@ -1,7 +1,0 @@
-version= "0.2"
-description = "First Order Logic Modulo Simplifications"
-requires = ""
-archive(byte) = "qed.cmo"
-archive(native) = "qed.cmxa"
-plugin(byte) = "qed.cmo"
-plugin(native) = "qed.cmxs"

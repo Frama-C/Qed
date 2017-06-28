@@ -1,0 +1,8 @@
+(library (
+  (name qed)
+  (public_name qed)
+  (libraries ())
+  (synopsis "First Order Logic Modulo Simplifications")
+  ))
+
+(ocamllex (numbers))

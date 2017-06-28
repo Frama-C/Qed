@@ -1,12 +1,23 @@
 (V1
-  ((
+  (
+   (
+    (name jbuilder)
+    (deps(
+        (ocaml "" "")
+    ))
+    (install ((make) (make install)))
+    (tests ())
+  )
+(
     (name qed)
     (deps(
         (ocaml "" "")
         (ocamlbuild "" "")
         (ZArith "" "")
+        (jbuilder "https://github.com/janestreet/jbuilder.git" "1.0+beta10")
     ))
     (install ((make) (make install)))
     (tests ((make doc)))
-  ))
+  )
+)
 )

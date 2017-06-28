@@ -9,5 +9,7 @@ build: [make]
 build-doc: [make "doc"]
 install: [make "install"]
 remove: ["ocamlfind" "remove" "qed"]
-depends: [ "ocamlfind" ]
+depends: [ "jbuilder" {build}
+           "ocamlbuild" {doc}
+         ]
 available: [ ocaml-version >= "4.03" ]

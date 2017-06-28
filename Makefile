@@ -34,8 +34,19 @@ help:
 	@echo "  make clean     remove generated files"
 	@echo "  make headers   normalize files"
 
+# -------------------------------------------------------------------------
+
+build:
+	jbuilder build
+
+install:
+	jbuilder install
+
+uninstall:
+	jbuilder uninstall
+
 # --------------------------------------------------------------------------
-# ---  Build                                                             ---
+# --- Documentation
 # --------------------------------------------------------------------------
 
 PKG=qed
@@ -46,50 +57,20 @@ FLAGS=  -use-ocamlfind $(JOBS) \
 	-cflags -w,PSUZL+7,-warn-error,PSUZL+7 \
 	-cflags -for-pack,$(NAME)
 
-TARGETS= $(addprefix src/$(PKG).,cmo cmx cmxa cmxs cmi a)
-
-build:
-	@echo "Build Qed."
-	@ocamlbuild $(DEPENDS) $(FLAGS) $(TARGETS)
-
-# --------------------------------------------------------------------------
-# --- Documentation
-# --------------------------------------------------------------------------
-
 doc: src/$(PKG).odocl
 	@echo "Generating '$(NAME)' documentation"
 	@ocamlbuild $(DEPENDS) $(FLAGS) \
+		-build-dir _doc 	\
 		-docflag -t -docflag "$(NAME) Library" \
 		-docflag -short-functors \
 		src/$(PKG).docdir/index.html
-	@cp -f licenses/ceatech.css _build/src/$(PKG).docdir/style.css
-	@echo "Documentation at $(PWD)/qed.docdir/index.html"
-
-src/$(PKG).odocl: src/$(PKG).mlpack
-	@rm -f $@
-	@cp $< $@
-	@chmod a-w $@
-
-# --------------------------------------------------------------------------
-# ---  Install                                                           ---
-# --------------------------------------------------------------------------
-
-install:
-	@echo "Install Qed."
-	@if [ -e $(shell ocamlfind printconf destdir)/$(PKG) ] ;\
-	 then ocamlfind remove $(PKG) ; fi
-	@ocamlfind install $(PKG) META $(addprefix _build/,$(TARGETS))
-
-uninstall:
-	@echo "Uninstall Qed."
-	@ocamlfind remove $(PKG)
-
-# --------------------------------------------------------------------------
+	@cp -f licenses/ceatech.css _doc/src/$(PKG).docdir/style.css
+	@echo "Documentation at $(PWD)/_doc/src/qed.docdir/index.html"
 
 clean:
 	@echo "Cleaning"
-	@rm -f src/$(PKG).odocl src/*~
-	@ocamlbuild -clean
+	@jbuilder clean
+	@rm -f _doc
 
 headers:
 	headache -c licenses/header.config -h licenses/HEADER \
@@ -98,4 +79,3 @@ headers:
 	opam lint ./opam
 	@grep "^name" opam
 	@grep "^version" opam META
-
