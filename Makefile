@@ -51,27 +51,22 @@ uninstall:
 
 PKG=qed
 NAME=Qed
-JOBS?= -j 4
-DEPENDS=
-FLAGS=  -use-ocamlfind $(JOBS) \
-	-cflags -w,PSUZL+7,-warn-error,PSUZL+7 \
-	-cflags -for-pack,$(NAME)
 
-doc: src/$(PKG).odocl
+doc:
 	@echo "Generating '$(NAME)' documentation"
-	@jbuilder clean
-	@ocamlbuild $(DEPENDS) $(FLAGS) \
-		-build-dir _doc 	\
-		-docflag -t -docflag "$(NAME) Library" \
-		-docflag -short-functors \
-		src/$(PKG).docdir/index.html
-	@cp -f licenses/ceatech.css _doc/src/$(PKG).docdir/style.css
-	@echo "Documentation at $(PWD)/_doc/src/qed.docdir/index.html"
+	@rm -fr html
+	@mkdir -p html
+	@jbuilder build
+	@ocamldoc -html -d html -t "$(NAME) Library" \
+		  -short-functors -I _build/default/src -open Qed \
+		  src/*.mli src/logic.ml src/engine.ml src/arith.ml
+	@cp -f licenses/ceatech.css html/style.css
+	@echo "Documentation at html/index.html"
 
 clean:
 	@echo "Cleaning"
 	@jbuilder clean
-	@rm -fr _doc
+	@rm -fr html
 
 headers:
 	headache -c licenses/header.config -h licenses/HEADER \

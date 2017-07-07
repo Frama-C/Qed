@@ -1,6 +1,4 @@
 /_build
-/qed.docdir
-/src/qed.odocl
 /qed.install
 /src/.merlin
-/_doc
+/html
