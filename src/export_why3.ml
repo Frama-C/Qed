@@ -52,7 +52,7 @@ struct
           let a = Bytes.of_string s in
           match Bytes.get a 0 with
           | 'A'..'Z' as c ->
-              Bytes.set a 0 (Char.lowercase_ascii c) ;
+              Bytes.set a 0 (Char.lowercase c) ;
               Bytes.to_string a
           | _ -> s
         else s
