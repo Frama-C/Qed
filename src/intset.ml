@@ -55,5 +55,3 @@ let for_all f = Intmap.for_all (fun i () -> f i)
 let exists f = Intmap.exists (fun i () -> f i)
 
 let elements = Intmap.mapl (fun i () -> i)
-let mapf f= Intmap.mapf (fun i () -> f i)
-let map f = Intmap.map (fun i () -> Some (f i))

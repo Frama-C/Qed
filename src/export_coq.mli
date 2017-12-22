@@ -22,7 +22,6 @@
 
 open Logic
 open Format
-open Plib
 
 (** Exportation Engine for Coq.
 

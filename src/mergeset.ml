@@ -120,6 +120,7 @@ struct
         ) m1 m2 ; false
     with Exit -> true
 
-  let equal = Intmap.equal E.equal
+  let equal = Intmap.equal Lset.equal
+  let compare = Intmap.compare Lset.compare
 
 end

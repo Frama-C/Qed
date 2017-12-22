@@ -39,6 +39,9 @@ sig
 
   type t = elt list Intmap.t
 
+  val equal : t -> t -> bool
+  val compare : t -> t -> int
+
   val is_empty : t -> bool
   val empty : t
 

@@ -27,7 +27,7 @@ cd .frama-c.tmp && tar zxf ../.frama-c.tgz && cd ..
 
 echo "Importing OCaml files"
 
-rm -fr src
+rm -fr src/*.ml*
 mkdir -p src
 rm -f .frama-c.tmp/src/plugins/qed/QedGui.ml
 cp .frama-c.tmp/src/plugins/qed/*.ml* src/

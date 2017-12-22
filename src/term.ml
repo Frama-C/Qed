@@ -28,18 +28,14 @@ open Hcons
 open Logic
 
 module Make
-    (Z:Arith.Z)
     (ADT : Logic.Data)
     (Field : Logic.Field)
     (Fun : Logic.Function) =
 struct
 
-  module Z = Z
-
   (* -------------------------------------------------------------------------- *)
 
   type tau = (Field.t,ADT.t) Logic.datatype
-  type signature = (Field.t,ADT.t) Logic.funtype
   type path = int list
 
   module Tau = Kind.MakeTau(Field)(ADT)
@@ -67,11 +63,11 @@ struct
     sort : sort ;
     repr : repr ;
   }
-  and repr = (Z.t,Field.t,ADT.t,Fun.t,var,term,term) term_repr
+  and repr = (Field.t,ADT.t,Fun.t,var,term,term) term_repr
 
   type bind = term
 
-  type 'a expression = (Z.t,Field.t,ADT.t,Fun.t,var,bind,'a) term_repr
+  type 'a expression = (Field.t,ADT.t,Fun.t,var,bind,'a) term_repr
 
   (* ------------------------------------------------------------------------ *)
   (* ---  Term Set,Map and Vars                                           --- *)
@@ -81,8 +77,6 @@ struct
   struct
     type t = term
     let id t = t.id
-    let hash t = t.hash
-    let equal = (==)
   end
   module Tset = Idxset.Make(E)
   module Tmap = Idxmap.Make(E)
@@ -142,13 +136,12 @@ struct
   let repr e = e.repr
   let hash e = e.hash
   let id e = e.id
-  let vars e = e.vars
 
   let hash_subterms = function
     | False -> 0
     | True  -> 0
     | Kint n -> Z.hash n
-    | Kreal x -> R.hash x
+    | Kreal x -> hash_pair (Z.hash x.Q.num) (Z.hash x.Q.den)
     | Times(n,t) -> Z.hash n * t.hash
     | Add xs | Mul xs | And xs | Or xs -> hash_list hash 0 xs
     | Div(x,y) | Mod(x,y) | Eq(x,y) | Neq(x,y) | Leq(x,y) | Lt(x,y)
@@ -203,7 +196,7 @@ struct
     | True , True -> true
     | False , False -> true
     | Kint n , Kint m -> Z.equal n m
-    | Kreal x , Kreal y -> R.equal x y
+    | Kreal x , Kreal y -> Q.equal x y
     | Times(n,x) , Times(m,y) -> x==y && Z.equal n m
     | Add xs , Add ys
     | Mul xs , Mul ys
@@ -402,7 +395,7 @@ struct
       | Kint _ , _ -> (-1)
       | _ , Kint _ -> 1
 
-      | Kreal a , Kreal b -> R.compare a b
+      | Kreal a , Kreal b -> Q.compare a b
       | Kreal _ , _ -> (-1)
       | _ , Kreal _ -> 1
 
@@ -743,6 +736,7 @@ struct
   let e_zero   = constant (insert (Kint Z.zero))
   let e_one    = constant (insert (Kint Z.one))
   let e_int n  = insert (Kint (Z.of_int n))
+  let e_float r = insert (Kreal (Q.of_float r))
   let e_zint z = insert (Kint z)
   let e_real x = insert (Kreal x)
   let e_var x  = insert(Fvar x)
@@ -821,7 +815,9 @@ struct
         with Exit ->
           insert(Rdef (List.sort compare_field fxs))
 
+  [@@@ warning "-32"]
   let insert _ = assert false (* [insert] should not be used afterwards *)
+  [@@@ warning "+32"]
 
   let rec subterm e = function
       [] -> e
@@ -1054,18 +1050,12 @@ struct
     | Logic.Operator op -> op_fun f op xs
     | _ -> c_builtin_fun f xs
 
-  let e_funraw = c_fun
   let e_fun = e_fungen
   let () = extern_fun := e_fun
 
   (* -------------------------------------------------------------------------- *)
   (* --- Ground & Arithmetics                                               --- *)
   (* -------------------------------------------------------------------------- *)
-
-  let z_op c f x y =
-    match x.repr , y.repr with
-    | Kint z , Kint z' -> e_zint (f z z')
-    | _ -> c x y
 
   type sign = Null | Negative | Positive
   let sign z =
@@ -1112,7 +1102,7 @@ struct
     if Z.equal z Z.zero then e_zint Z.zero else
       match e.repr with
       | Kint z' -> e_zint (Z.mul z z')
-      | Kreal r when Z.equal z Z.minus_one -> e_real (R.opp r)
+      | Kreal r when Z.equal z Z.minus_one -> e_real (Q.neg r)
       | Times(z',t) -> times (Z.mul z z') t
       | _ -> c_times z e
 
@@ -1127,15 +1117,15 @@ struct
     | Times(n,t) -> unfold_affine1 acc (Z.mul k n) t
     | Kint z -> if z == Z.zero then acc else (Z.mul k z , e_one) :: acc
     | Add ts -> unfold_affine acc k ts
-    | Kreal z when R.is_zero z -> acc
-    | Kreal r when R.negative r -> (Z.neg k,e_real (R.opp r)) :: acc
+    | Kreal r when Q.(equal r zero) -> acc
+    | Kreal r when Q.(leq r zero) -> (Z.neg k,e_real (Q.neg r)) :: acc
     | _ -> (k,t) :: acc
 
   (* sorts monoms by terms *)
   let compare_monoms (_,t1) (_,t2) = Pervasives.compare t1.id t2.id
 
   (* factorized monoms *)
-  let rec fold_monom ts k t =
+  let fold_monom ts k t =
     if Z.equal Z.zero k then ts else
     if Z.equal Z.one k then t::ts else
       times k t :: ts
@@ -1164,7 +1154,7 @@ struct
 
   let is_affine e = match e.repr with
     | Kint _ | Times _ | Add _ -> true
-    | Kreal z -> R.is_zero z
+    | Kreal z -> Q.equal z Q.zero
     | _ -> false
 
   let rec partition_monoms phi c xs ys = function
@@ -1278,11 +1268,6 @@ struct
         | False -> fold_or acc others
         | Or xs -> fold_or (fold_or acc xs) others
         | _     -> fold_or (x::acc) others
-
-  let rec check_conjugate = function
-    | []  -> ()
-    | a::b::_ when a == e_not b -> raise Absorbant
-    | _::qs  -> check_conjugate qs
 
   let conjunction ts =
     try
@@ -1408,7 +1393,7 @@ struct
       end
     | _ -> x
 
-  let rec consequence h x = 
+  let consequence h x = 
     let not_x = e_not x in
     match h.repr with
     | True -> x
@@ -1455,20 +1440,6 @@ struct
   (* --- Equality on R                                                      --- *)
   (* -------------------------------------------------------------------------- *)
 
-  let kreal_of_kint z = R.of_string (Z.to_string z ^ ".0")
-
-  let eq_real x y z z' =
-    match R.eq z z' with
-    | R.Sure_true -> e_true
-    | R.Sure_false -> e_false
-    | R.Unknown -> c_eq x y
-
-  let neq_real x y z z' =
-    match R.neq z z' with
-    | R.Sure_true -> e_true
-    | R.Sure_false -> e_false
-    | R.Unknown -> c_neq x y
-
   (* -------------------------------------------------------------------------- *)
   (* --- Equality                                                           --- *)
   (* -------------------------------------------------------------------------- *)
@@ -1479,8 +1450,9 @@ struct
   and eq_symb x y =
     match x.repr , y.repr with
     | Kint z , Kint z' -> if Z.equal z z' then e_true else e_false
-    | Kreal z , Kreal z' -> eq_real x y z z'
-    | Kint a , Kreal r | Kreal r , Kint a -> eq_real x y r (kreal_of_kint a)
+    | Kreal z , Kreal z' -> if Q.equal z z' then e_true else e_false
+    | Kint a , Kreal r | Kreal r , Kint a ->
+        if Q.equal r (Q.of_bigint a) then e_true else e_false
     | True , _ -> y
     | _ , True -> x
     | False , _ -> e_not y
@@ -1523,8 +1495,9 @@ struct
   and neq_symb x y =
     match x.repr , y.repr with
     | Kint z , Kint z' -> if Z.equal z z' then e_false else e_true
-    | Kreal z , Kreal z' -> neq_real x y z z'
-    | Kreal r , Kint a | Kint a , Kreal r -> neq_real x y r (kreal_of_kint a)
+    | Kreal z , Kreal z' -> if Q.equal z z' then e_false else e_true
+    | Kreal r , Kint a | Kint a , Kreal r ->
+        if Q.equal r (Q.of_bigint a) then e_false else e_true
     | True , _ -> e_not y
     | _ , True -> e_not x
     | False , _ -> y
@@ -2037,7 +2010,7 @@ struct
   let pp_record fmt fxs = List.iter (pp_field fmt) fxs
   let pp_repr fmt = function
     | Kint z -> Format.fprintf fmt "constant %s" (Z.to_string z)
-    | Kreal z -> Format.fprintf fmt "real constant %s" (R.to_string z)
+    | Kreal z -> Format.fprintf fmt "real constant %s" (Q.to_string z)
     | True  -> Format.pp_print_string fmt "true"
     | False -> Format.pp_print_string fmt "false"
     | Times(z,x) -> Format.fprintf fmt "times %s%a" (Z.to_string z) pp_id x

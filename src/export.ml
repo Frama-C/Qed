@@ -351,14 +351,8 @@ struct
       method virtual e_true : cmode -> string
       method virtual e_false : cmode -> string
       method virtual pp_int : amode -> Z.t printer
-      method virtual pp_cst : Numbers.cst printer
+      method virtual pp_real : Q.t printer
       method virtual is_atomic : term -> bool
-
-      method pp_real fmt x =
-        let cst = Numbers.parse (R.to_string x) in
-        if Numbers.is_zero cst
-        then self#pp_int Areal fmt Z.zero
-        else self#pp_cst fmt cst
 
       (* -------------------------------------------------------------------------- *)
       (* --- Calls                                                              --- *)
@@ -393,13 +387,13 @@ struct
               fprintf fmt "%s %a" op self#pp_flow x
             else
               fprintf fmt "%s%a" op self#pp_atom x
-        | Call f -> self#pp_call ~f fmt [x]
+        | Call f -> self#pp_call f fmt [x]
 
       method private pp_binop ~op fmt x y =
         match op with
         | Assoc op | Op op ->
             fprintf fmt "%a %s@ %a" self#pp_atom x op self#pp_atom y
-        | Call f -> self#pp_call ~f fmt [x;y]
+        | Call f -> self#pp_call f fmt [x;y]
 
       method private pp_binop_term ~op fmt x y =
         self#with_mode Mterm (fun _old -> self#pp_binop ~op fmt x y)
@@ -545,7 +539,7 @@ struct
           begin fun _ ->
             match phi (amode mode) with
             | Assoc op | Op op ->
-                Plib.pp_binop ~op (self#pp_arith_arg Atom) fmt a b
+                Plib.pp_binop op (self#pp_arith_arg Atom) fmt a b
             | Call f -> self#pp_arith_call ~f fmt [a;b]
           end
 
@@ -581,13 +575,13 @@ struct
                  | None ->
                      begin
                        fprintf fmt "@[<hov 2>" ;
-                       Plib.pp_binop ~op (self#pp_arith_arg Atom) fmt a b ;
+                       Plib.pp_binop op (self#pp_arith_arg Atom) fmt a b ;
                        fprintf fmt "@]" ;
                      end
                  | Some s ->
                      begin
                        fprintf fmt "@[<hov 1>(" ;
-                       Plib.pp_binop ~op (self#pp_arith_arg Atom) fmt a b ;
+                       Plib.pp_binop op (self#pp_arith_arg Atom) fmt a b ;
                        fprintf fmt ")%s@]" s ;
                      end)
         | Call f ->
@@ -821,7 +815,7 @@ struct
         | Assoc add , Assoc sub , Op minus ->
             let factor x = match T.repr x with
               | Kint z when Z.lt z Z.zero-> (false,T.e_zint (Z.neg z))
-              | Kreal r when R.negative r -> (false,T.e_real (R.opp r))
+              | Kreal r when Q.lt r Q.zero -> (false,T.e_real (Q.neg r))
               | Times(k,y) when Z.lt k Z.zero -> (false,T.e_times (Z.neg k) y)
               | _ -> (true,x) in
             let sxs = List.map factor xs in

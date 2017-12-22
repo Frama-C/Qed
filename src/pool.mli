@@ -24,9 +24,6 @@
 (* ---     Variable Management                                            --- *)
 (* -------------------------------------------------------------------------- *)
 
-open Hcons
-open Logic
-
 module type Type =
 sig
   type t

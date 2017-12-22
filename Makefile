@@ -57,9 +57,10 @@ doc:
 	@rm -fr html
 	@mkdir -p html
 	@jbuilder build
-	@ocamldoc -html -d html -t "$(NAME) Library" \
+	@ocamlfind ocamldoc -html -d html -t "$(NAME) Library" \
+		  -package zarith \
 		  -short-functors -I _build/default/src -open Qed \
-		  src/*.mli src/logic.ml src/engine.ml src/arith.ml
+		  src/*.mli src/logic.ml src/engine.ml
 	@cp -f licenses/ceatech.css html/style.css
 	@echo "Documentation at html/index.html"
 

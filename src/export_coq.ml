@@ -40,14 +40,8 @@ struct
   open T
 
   type tau = (Field.t,ADT.t) datatype
-  type record = (Field.t * term) list
   type trigger = (var,Fun.t) ftrigger
   type typedef = (tau,Field.t,Fun.t) ftypedef
-
-  let libraries = [
-    "Bool" ; "ZArith" ; "Reals" ;
-    "Qed" ; "Cdiv" ;
-  ]
 
   class virtual engine =
     object(self)
@@ -86,7 +80,7 @@ struct
 
       method pp_datatype adt fmt = function
         | [] -> pp_print_string fmt (self#datatype adt)
-        | ts -> Plib.pp_call_apply ~f:(self#datatype adt) self#pp_subtau fmt ts
+        | ts -> Plib.pp_call_apply (self#datatype adt) self#pp_subtau fmt ts
 
       (* -------------------------------------------------------------------------- *)
       (* --- Primitives                                                         --- *)
@@ -96,13 +90,10 @@ struct
       method op_scope = function Aint -> Some "%Z" | Areal -> Some "%R"
 
       method pp_int _amode fmt z = pp_print_string fmt (Z.to_string z)
-      method pp_cst fmt cst =
-        let open Numbers in
-        let man,exp = significant cst in
-        let sign = match cst.sign with Pos -> "" | Neg -> "-" in
-        match cst.base with
-        | Dec -> fprintf fmt "(real_dec (%s%s) (%d))" sign man exp
-        | Hex -> fprintf fmt "(real_hex (%s%s) (%d))" sign (dec_of_hex man) exp
+      method pp_real fmt q =
+        fprintf fmt "( %s / %s )%%R"
+          (Z.to_string q.Q.num)
+          (Z.to_string q.Q.den)       
 
       method e_true  = function Cterm -> "true"  | Cprop -> "True"
       method e_false = function Cterm -> "false" | Cprop -> "False"

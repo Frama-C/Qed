@@ -30,10 +30,6 @@ open Plib
 open Engine
 open Export
 
-let rec cartesian f = function
-  | [] | [_] -> ()
-  | x::xs -> List.iter (fun y -> f x y) xs ; cartesian f xs
-
 module Make(T : Term) =
 struct
 
@@ -44,16 +40,13 @@ struct
   module Field = T.Field
   module Fun = T.Fun
 
-  type var = Var.t
-  type term = T.term
-  type record = (Field.t * term) list
   type trigger = (T.var,Fun.t) ftrigger
   type typedef = (tau,Field.t,Fun.t) Engine.ftypedef
 
   class virtual engine =
     object(self)
 
-      inherit E.engine as super
+      inherit E.engine
 
       (* -------------------------------------------------------------------------- *)
       (* --- Types                                                              --- *)
@@ -98,29 +91,13 @@ struct
         | Aint -> pp_print_string fmt (Z.to_string z)
         | Areal -> fprintf fmt "%s.0" (Z.to_string z)
 
-      method pp_cst fmt cst =
-        let open Numbers in
-        match cst.sign , cst.base with
-        | Pos,Dec ->
-            let man = if cst.man = "" then "0" else cst.man in
-            let com = if cst.com = "" then "0" else cst.com in
-            fprintf fmt "%s.%se%d" man com cst.exp
-        | Neg,Dec ->
-            let man = if cst.man = "" then "0" else cst.man in
-            let com = if cst.com = "" then "0" else cst.com in
-            fprintf fmt "(-%s.%se%d)" man com cst.exp
-        | _,Hex ->
-            let hex,exp = Numbers.significant cst in
-            let base = Numbers.dec_of_hex hex in
-            if exp > 0 then
-              let sign = match cst.sign with Pos -> "" | Neg -> "-" in
-              fprintf fmt "(%s%s.0*%s.0)" sign base (Numbers.power_of_two exp)
-            else if exp < 0 then
-              let sign = match cst.sign with Pos -> "" | Neg -> "-" in
-              fprintf fmt "(%s%s.0/%s.0)" sign base (Numbers.power_of_two (-exp))
-            else match cst.sign with
-              | Pos -> fprintf fmt "%s.0" base
-              | Neg -> fprintf fmt "(-%s.0)" base
+      method pp_real fmt r =
+        if Z.equal r.Q.den Z.one then
+          self#pp_int Areal fmt r.Q.num
+        else
+          fprintf fmt "(%a@ / %a)"
+            (self#pp_int Areal) r.Q.num
+            (self#pp_int Areal) r.Q.den
 
       method op_real_of_int = Call "real_of_int"
 

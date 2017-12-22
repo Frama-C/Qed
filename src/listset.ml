@@ -56,18 +56,6 @@ struct
     List.rev_append (rev_append_until i l1 []) l2
 
   (* good sharing *)
-  let mapq f l =
-    let rec aux ((res,rest) as acc) = function
-      | [] -> List.rev_append res rest
-      | i :: resti ->
-          (match f i with
-           | None -> (* remove *) aux ((rev_append_until i rest res),resti) resti
-           | Some i' ->
-               if i' = i then (* add idem *) aux acc resti
-               else (* add new *) aux ((i'::(rev_append_until i rest res)),resti) resti)
-    in aux ([],l) l
-
-  (* good sharing *)
   (* idem List.filter, but returns l if no element is removed. *)
   let filter f l =
     let rec aux ((res,rest) as acc) = function

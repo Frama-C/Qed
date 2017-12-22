@@ -52,15 +52,17 @@ let hash_array f h xs =
   in collect h xs 0
 
 let rec compare_list cmp xs ys =
-  match xs , ys with
-  | [] , [] -> 0
-  | [] , _ :: _ -> -1
-  | _ :: _ , [] -> 1
-  | x::xs , y::ys ->
-      let c = cmp x y in
-      if c = 0 then compare_list cmp xs ys else c
+  if xs == ys then 0 else
+    match xs , ys with
+    | [] , [] -> 0
+    | [] , _ :: _ -> -1
+    | _ :: _ , [] -> 1
+    | x::xs , y::ys ->
+        let c = cmp x y in
+        if c = 0 then compare_list cmp xs ys else c
 
 let rec equal_list eq xs ys =
+  xs == ys ||
   match xs , ys with
   | [] , [] -> true
   | [] , _ :: _ | _ :: _ , [] -> false

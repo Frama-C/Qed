@@ -38,6 +38,9 @@ sig
 
   type 'a t = (key * 'a) list
 
+  val compare : ('a -> 'a -> int) -> 'a t -> 'a t -> int
+  val equal : ('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
   val empty : 'a t
   val add : key -> 'a -> 'a t -> 'a t
   val mem : key -> 'a t -> bool
@@ -70,7 +73,5 @@ sig
   val iterk : (key -> 'a -> 'b -> unit) -> 'a t -> 'b t -> unit
   val iter2 : (key -> 'a option -> 'b option -> unit) -> 'a t -> 'b t -> unit
   val merge : (key -> 'a option -> 'b option -> 'c option) -> 'a t -> 'b t -> 'c t
-
-  val equal : ('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
 end

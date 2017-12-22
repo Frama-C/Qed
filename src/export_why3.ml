@@ -26,7 +26,6 @@
 
 open Logic
 open Format
-open Plib
 open Export
 open Engine
 
@@ -40,17 +39,8 @@ struct
   open T
 
   type tau = (Field.t,ADT.t) datatype
-  type record = (Field.t * term) list
   type trigger = (var,Fun.t) ftrigger
   type typedef = (tau,Field.t,Fun.t) ftypedef
-
-  let libraries = [
-    "bool.Bool" ;
-    "int.Int" ; "int.ComputerDivision" ;
-    "real.RealInfix" ; "real.FromInt" ;
-    "map.Map" ;
-    "qed.Arith" ;
-  ]
 
   class virtual engine =
     object(self)
@@ -58,12 +48,13 @@ struct
       inherit E.engine as super
 
       method! basename s =
-        (** TODO: better uncapitalization of the first letter? utf8? *)
-        let lower0 = Char.lowercase s.[0] in
-        if String.length s > 0 &&  lower0 <> s.[0] then
-          let s = Bytes.of_string s in
-          Bytes.set s 0 lower0 ;
-          Bytes.unsafe_to_string s
+        if String.length s > 0 then
+          let a = Bytes.of_string s in
+          match Bytes.get a 0 with
+          | 'A'..'Z' as c ->
+              Bytes.set a 0 (Char.lowercase_ascii c) ;
+              Bytes.to_string a
+          | _ -> s
         else s
 
       (* -------------------------------------------------------------------------- *)
@@ -89,7 +80,7 @@ struct
 
       method pp_datatype adt fmt = function
         | [] -> pp_print_string fmt (self#datatype adt)
-        | ts -> Plib.pp_call_apply ~f:(self#datatype adt) self#pp_subtau fmt ts
+        | ts -> Plib.pp_call_apply (self#datatype adt) self#pp_subtau fmt ts
 
       (* -------------------------------------------------------------------------- *)
       (* --- Primitives                                                         --- *)
@@ -111,15 +102,13 @@ struct
             else
               fprintf fmt "%s.0" (Z.to_string k)
 
-      method pp_cst fmt cst =
-        let open Numbers in
-        let man = if cst.man = "" then "0" else cst.man in
-        let com = if cst.com = "" then "0" else cst.com in
-        match cst.sign , cst.base with
-        | Pos,Dec -> fprintf fmt "%s.%se%d" man com cst.exp
-        | Neg,Dec -> fprintf fmt "(-.%s.%se%d)" man com cst.exp
-        | Pos,Hex -> fprintf fmt "0x%s.%sp%d" man com cst.exp
-        | Neg,Hex -> fprintf fmt "(-.0x%s.%sp%d)" man com cst.exp
+      method pp_real fmt r =
+        if Z.equal r.Q.den Z.one then
+          self#pp_int Areal fmt r.Q.num
+        else
+          fprintf fmt "(%a@ /. %a)"
+            (self#pp_int Areal) r.Q.num
+            (self#pp_int Areal) r.Q.den
 
       method op_real_of_int = Call "real_of_int"
 

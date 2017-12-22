@@ -24,8 +24,6 @@
 (**    Pretty Printing Utilities.                                             *)
 (* -------------------------------------------------------------------------- *)
 
-open Format
-
 (** Message Formatters *)
 
 val kprintf : (string -> 'b) -> ('a,Format.formatter,unit,'b) format4 -> 'a

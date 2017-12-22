@@ -113,7 +113,6 @@ let included_mask_int m n =
   (* can not use (m < n) when n is (1 lsl 62) = min_int < 0 *)
   (* must use (0 < (n-m) instead *)
   0 > n - m
-let included_mask p q = included_mask_int (decode_mask p) (decode_mask q)
 
 let included_prefix p q =
   let m = decode_mask p in
@@ -129,10 +128,6 @@ let empty = Empty
 let singleton k x = Lf(k,x)
 
 let lf k = function None -> Empty | Some x -> Lf(k,x)
-
-let br p t0 t1 = match t0 , t1 with
-  | Empty,t | t,Empty -> t
-  | _ -> Br(p,t0,t1)
 
 (* good sharing *)
 let lf0 k x' t' = function None -> Empty | Some x -> if x == x' then t' else Lf(k,x)

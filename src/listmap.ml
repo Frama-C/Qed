@@ -229,13 +229,6 @@ struct
         if c > 0 then subset f w1 r2 else
           f k1 v1 v2 && subset f r1 r2
 
-  let rec equal eq w1 w2 =
-    match w1 , w2 with
-    | [] , [] -> true
-    | [] , _::_ | _::_ , [] -> false
-    | (k1,v1)::r1 , (k2,v2)::r2 ->
-        w1==w2 || (K.equal k1 k2 && eq v1 v2 && equal eq r1 r2)
-
   let rec iterk
       (f : K.t -> 'a -> 'b -> unit)
       (w1 : (K.t * 'a) list)

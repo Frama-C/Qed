@@ -1,8 +1,6 @@
 (library (
   (name qed)
   (public_name qed)
-  (libraries ())
+  (libraries (zarith))
   (synopsis "First Order Logic Modulo Simplifications")
   ))
-
-(ocamllex (numbers))
