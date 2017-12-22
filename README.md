@@ -23,7 +23,7 @@ The main features of the library are:
 ## Installation
 
 Requirements:
- - `ocaml 4.03` or higher, with `ocamlfind` and `ocamlbuild`
+ - `ocaml 4.04` or higher, with `ocamlfind` and `ocamlbuild`
 
 To build and install the library:
 ```
