@@ -5,7 +5,7 @@ homepage: "https://github.com/Frama-C/Qed"
 maintainer: "Loïc Correnson <loic.correnson@cea.fr>"
 authors: "Loïc Correnson <loic.correnson@cea.fr>"
 license: "LGPL v2.1"
-build: [make]
+build: [make "build"]
 build-doc: [make "doc"]
 install: [make "install"]
 remove: ["ocamlfind" "remove" "qed"]
