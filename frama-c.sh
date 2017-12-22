@@ -23,11 +23,12 @@ cd .frama-c.tmp && tar zxf ../.frama-c.tgz && cd ..
 
 echo "Importing OCaml files..."
 
+rm -f .frama-c.tmp/src/plugins/qed/QedGui.ml
 cp .frama-c.tmp/src/plugins/qed/*.ml* src/
 
 echo "Cleaning..."
 
 rm -fr .frama-c.tmp .frama-c.tgz
+make lint
 
 echo "Done."
-
