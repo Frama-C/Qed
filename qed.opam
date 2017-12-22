@@ -1,6 +1,6 @@
 opam-version: "1.2"
 name: "qed"
-version: "0.2"
+version: "1.0"
 homepage: "https://github.com/Frama-C/Qed"
 maintainer: "Loïc Correnson <loic.correnson@cea.fr>"
 authors: "Loïc Correnson <loic.correnson@cea.fr>"
