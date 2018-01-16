@@ -42,9 +42,9 @@ sig
   class virtual engine :
     object
 
+      method sanitize : string -> string
       method virtual datatype : ADT.t -> string
       method virtual field : Field.t -> string
-      method basename : string -> string
       method virtual link : Fun.t -> link
 
       method env : Env.t

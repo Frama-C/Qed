@@ -46,16 +46,7 @@ struct
     object(self)
 
       inherit E.engine as super
-
-      method! basename s =
-        if String.length s > 0 then
-          let a = Bytes.of_string s in
-          match Bytes.get a 0 with
-          | 'A'..'Z' as c ->
-              Bytes.set a 0 (Char.lowercase_ascii c) ;
-              Bytes.to_string a
-          | _ -> s
-        else s
+      method! sanitize = Export.sanitize ~to_lowercase:true
 
       (* -------------------------------------------------------------------------- *)
       (* --- Types                                                              --- *)
@@ -80,7 +71,7 @@ struct
 
       method pp_datatype adt fmt = function
         | [] -> pp_print_string fmt (self#datatype adt)
-        | ts -> Plib.pp_call_apply (self#datatype adt) self#pp_subtau fmt ts
+        | ts -> Plib.pp_call_apply ~f:(self#datatype adt) self#pp_subtau fmt ts
 
       (* -------------------------------------------------------------------------- *)
       (* --- Primitives                                                         --- *)

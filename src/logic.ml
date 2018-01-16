@@ -44,7 +44,7 @@ type 'a operator = {
 
 (** Algebraic properties for functions. *)
 type 'a category =
-  | Function      (** no reduction rule *)
+  | Function      (** logic function *)
   | Constructor   (** [f xs = g ys] iff [f=g && xi=yi] *)
   | Injection     (** [f xs = f ys] iff [xi=yi] *)
   | Operator of 'a operator
@@ -335,6 +335,13 @@ sig
 
       	Highest priority is [0].
       	Recursive calls must be performed on strictly smaller terms.
+  *)
+
+  val set_builtin_map : Fun.t -> (term list -> term list) -> unit
+  (** Register a builtin for rewriting [f a1..an] into [f b1..bm].
+
+      This is short cut for [set_builtin], where the head application of [f] avoids
+      to run into an infinite loop.
   *)
 
   val set_builtin_eq : Fun.t -> (term -> term -> term) -> unit

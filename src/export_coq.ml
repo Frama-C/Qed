@@ -80,7 +80,7 @@ struct
 
       method pp_datatype adt fmt = function
         | [] -> pp_print_string fmt (self#datatype adt)
-        | ts -> Plib.pp_call_apply (self#datatype adt) self#pp_subtau fmt ts
+        | ts -> Plib.pp_call_apply ~f:(self#datatype adt) self#pp_subtau fmt ts
 
       (* -------------------------------------------------------------------------- *)
       (* --- Primitives                                                         --- *)
@@ -207,7 +207,7 @@ struct
       (* --- Atomicity                                                          --- *)
       (* -------------------------------------------------------------------------- *)
 
-      method op_spaced = is_ident
+      method op_spaced = is_identifier
 
       method is_atomic e =
         match T.repr e with

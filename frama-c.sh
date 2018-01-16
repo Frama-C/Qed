@@ -25,11 +25,12 @@ rm -fr .frama-c.tmp
 mkdir .frama-c.tmp
 cd .frama-c.tmp && tar zxf ../.frama-c.tgz && cd ..
 
-echo "Importing OCaml files"
+echo "Overwrite source files"
 
 rm -fr src/*.ml*
 mkdir -p src
 rm -f .frama-c.tmp/src/plugins/qed/QedGui.ml
+rm -f src/*.ml*
 cp .frama-c.tmp/src/plugins/qed/*.ml* src/
 
 echo "Cleaning"

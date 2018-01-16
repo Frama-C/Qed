@@ -37,8 +37,8 @@ val pmode : mode -> pmode
 val tmode : ('a,'f) Logic.datatype -> mode
 val ctau  : ('a,'f) Logic.datatype -> cmode
 
-val is_ident : string -> bool
-val extract_ident : string -> string
+val is_identifier : string -> bool
+val sanitize : to_lowercase:bool -> string -> string
 
 val debug : link -> string
 val link_name : link -> string
@@ -56,10 +56,9 @@ sig
   class virtual engine :
     object
 
+      method sanitize : string -> string
       method virtual datatype : ADT.t -> string
       method virtual field : Field.t -> string
-      method basename : string -> string
-      (** Allows to sanitize the basename used for in this engine for variable. *)
       method virtual link : Fun.t -> link
 
       method env : Env.t (** A safe copy of the environment *)

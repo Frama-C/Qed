@@ -87,12 +87,13 @@ sig
   val copy : t -> t
   val clear : t -> unit
   val used : t -> string -> bool
-  val fresh : t -> ?suggest:bool -> string -> string
+  val fresh : t -> sanitizer:('a -> string) -> ?suggest:bool -> 'a -> string
   val define : t -> string -> term -> unit
   val unfold : t -> term -> unit
   val shared : t -> term -> bool
-  val shareable : t -> term -> bool (** not unfolded *)
-  val force_index : t -> unit
+  val shareable : t -> term -> bool
+  val set_indexed_vars : t -> unit
+  val iter : (string -> term -> unit) -> t -> unit
 end
 
 (** Generic Engine Signature *)
@@ -102,10 +103,9 @@ class type virtual ['z,'adt,'field,'logic,'tau,'var,'term,'env] engine =
 
     (** {3 Linking} *)
 
+    method sanitize : string -> string
     method virtual datatype : 'adt -> string
     method virtual field : 'field -> string
-    method basename : string -> string
-    (** Allows to sanitize the basename used for every name except function. *)
     method virtual link : 'logic -> link
 
     (** {3 Global and Local Environment} *)

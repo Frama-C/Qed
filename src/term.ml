@@ -904,12 +904,18 @@ struct
       -> !extern_ite bc (f a b1) (f a b2)
     | _ -> op x y
 
-  let c_builtin_fun f = function
-    | x::[] as xs -> (match x.repr with
-        | If(c,a,b) ->  !extern_ite c (!extern_fun f [a]) (!extern_fun f [b])
-        | _ -> operation (FUN(f,xs)))
-    | a::b::[] as xs ->   distribute_if_over_operation false (fun f xs -> operation (FUN(f,xs))) f xs (fun a b -> !extern_fun f [a;b]) a b
+  let distribute f = function
+    | x::[] as xs -> 
+        begin
+          match x.repr with
+          | If(c,a,b) ->  !extern_ite c (!extern_fun f [a]) (!extern_fun f [b])
+          | _ -> operation (FUN(f,xs))
+        end
+    | a::b::[] as xs ->
+        distribute_if_over_operation false (fun f xs -> operation (FUN(f,xs))) f xs (fun a b -> !extern_fun f [a;b]) a b
     | xs -> operation (FUN(f,xs))
+
+  let c_builtin_fun f xs = distribute f xs
   let c_builtin_eq  a b = distribute_if_over_operation true (fun a b -> operation (CMP(EQ ,a,b))) a b !extern_eq  a b
   let c_builtin_neq a b = distribute_if_over_operation true (fun a b -> operation (CMP(NEQ,a,b))) a b !extern_neq a b
   let c_builtin_lt  a b = distribute_if_over_operation true (fun a b -> operation (CMP(LT ,a,b))) a b !extern_lt  a b
@@ -939,6 +945,8 @@ struct
       prepare_builtin f !state.builtins_leq ;
       !state.builtins_leq <- BUILTIN.add f p !state.builtins_leq ;
     end
+
+  let set_builtin_map f phi = set_builtin f (fun es -> c_fun f (phi es))
 
   (* -------------------------------------------------------------------------- *)
   (* --- Negation                                                           --- *)
@@ -1057,52 +1065,100 @@ struct
   (* --- Ground & Arithmetics                                               --- *)
   (* -------------------------------------------------------------------------- *)
 
+  let rec i_ground f c xs = function
+    | {repr=Kint n}::ts -> i_ground f (f c n) xs ts
+    | x::ts -> i_ground f c (x::xs) ts
+    | [] -> c , xs
+
+  let rec r_ground f c xs = function
+    | {repr=Kreal z}::ts -> r_ground f (f c z) xs ts
+    | {repr=Kint n}::ts -> r_ground f (f c (Q.of_bigint n)) xs ts
+    | x::ts -> r_ground f c (x::xs) ts
+    | [] -> c , xs
+
   type sign = Null | Negative | Positive
   let sign z =
     if Z.lt z Z.zero then Negative else
     if Z.lt Z.zero z then Positive else
       Null
+(*
+  let pp fmt a =
+    match a.repr with
+    | Kint z -> Format.pp_print_string fmt (Z.to_string z)
+    | Kreal q -> Format.pp_print_string fmt (Q.to_string q)
+    | Fvar x -> Var.pretty fmt x
+    | _ -> Format.fprintf fmt "#%d" a.id
+*)
 
-  let affine_rel fc fe c xs ys =
+  let r_affine_rel fz fe c xs ys =
+    let a , xs = r_ground Q.add (Q.of_bigint c) [] xs in
+    let b , ys = r_ground Q.add Q.zero [] ys in
+    let c = Q.sub a b in
+    match xs , ys with
+    | [] , [] -> if fz c Q.zero then e_true else e_false
+    | [] , _ -> fe (e_real c) (c_add ys)
+    | _ , [] -> fe (c_add xs) (e_real (Q.neg c))
+    | _ ->
+        let s = Q.sign c in
+        if s < 0 then fe (c_add xs) (c_add (e_real (Q.neg c) :: ys)) else
+        if s > 0 then fe (c_add (e_real c :: xs)) (c_add ys) else
+          fe (c_add xs) (c_add ys)
+
+  let i_affine_rel fc fe c xs ys =
     match xs , ys with
     | [] , [] -> if fc c Z.zero then e_true else e_false
     | [] , _ -> fe (e_zint c) (c_add ys) (* c+0 R ys <-> c R ys *)
     | _ , [] -> fe (c_add xs) (e_zint (Z.neg c)) (* c+xs R 0 <-> xs R -c *)
     | _ ->
         match sign c with
-        | Null -> fe (c_add xs) (c_add ys)
         (* 0+xs R ys <-> xs R ys *)
-        | Negative -> fe (c_add xs) (c_add (e_zint (Z.neg c) :: ys))
+        | Null -> fe (c_add xs) (c_add ys)
         (* c+xs R ys <-> xs R (-c+ys) *)
+        | Negative -> fe (c_add xs) (c_add (e_zint (Z.neg c) :: ys))
+        (* c+xs R ys <-> (c+xs) R ys *)
         | Positive -> fe (c_add (e_zint c :: xs)) (c_add ys)
-  (* c+xs R ys <-> (c+xs) R ys *)
 
-  let affine_eq = affine_rel Z.equal c_builtin_eq
-  let affine_neq = affine_rel (fun x y -> not (Z.equal x y)) c_builtin_neq
+  let i_affine xs ys =
+    not (List.exists is_real xs || List.exists is_real ys)
+
+
+  let affine_eq c xs ys =
+    if i_affine xs ys
+    then i_affine_rel Z.equal c_builtin_eq c xs ys
+    else r_affine_rel Q.equal c_builtin_eq c xs ys
+
+  let affine_neq c xs ys =
+    if i_affine xs ys
+    then i_affine_rel (fun x y -> not (Z.equal x y)) c_builtin_neq c xs ys
+    else r_affine_rel (fun x y -> not (Q.equal x y)) c_builtin_neq c xs ys
 
   let affine_leq c xs ys =
-    if Z.equal c Z.one && List.for_all is_int xs && List.for_all is_int ys
-    then affine_rel Z.lt c_builtin_lt Z.zero xs ys
-    else affine_rel Z.leq c_builtin_leq c xs ys
+    if i_affine xs ys then
+      if Z.equal c Z.one
+      then i_affine_rel Z.lt c_builtin_lt Z.zero xs ys
+      else i_affine_rel Z.leq c_builtin_leq c xs ys
+    else r_affine_rel Q.leq c_builtin_leq c xs ys
 
   let affine_lt c xs ys =
-    if not (Z.equal c Z.zero) && List.for_all is_int xs && List.for_all is_int ys
-    then affine_rel Z.leq c_builtin_leq (Z.succ c) xs ys
-    else affine_rel Z.lt c_builtin_lt c xs ys
-
-  let rec ground f c xs = function
-    | {repr=Kint n}::ts -> ground f (f c n) xs ts
-    | x::ts -> ground f c (x::xs) ts
-    | [] -> c , xs
+    if i_affine xs ys then
+      if not (Z.equal c Z.zero)
+      then i_affine_rel Z.leq c_builtin_leq (Z.succ c) xs ys
+      else i_affine_rel Z.lt c_builtin_lt c xs ys
+    else r_affine_rel Q.lt c_builtin_lt c xs ys
 
   (* --- Times --- *)
+
+  let q_times k z =
+    if Z.equal k Z.one then z else
+    if Z.equal k Z.zero then Q.zero else
+      Q.(make (Z.mul k z.num) z.den)
 
   let rec times z e =
     if Z.equal z Z.one then e else
     if Z.equal z Z.zero then e_zint Z.zero else
       match e.repr with
       | Kint z' -> e_zint (Z.mul z z')
-      | Kreal r when Z.equal z Z.minus_one -> e_real (Q.neg r)
+      | Kreal r -> e_real (q_times z r)
       | Times(z',t) -> times (Z.mul z z') t
       | _ -> c_times z e
 
@@ -1118,7 +1174,7 @@ struct
     | Kint z -> if z == Z.zero then acc else (Z.mul k z , e_one) :: acc
     | Add ts -> unfold_affine acc k ts
     | Kreal r when Q.(equal r zero) -> acc
-    | Kreal r when Q.(leq r zero) -> (Z.neg k,e_real (Q.neg r)) :: acc
+    | Kreal r -> (Z.one , e_real (q_times k r)) :: acc
     | _ -> (k,t) :: acc
 
   (* sorts monoms by terms *)
@@ -1135,7 +1191,12 @@ struct
     | (n1,t1)::(n2,t2)::kts when t1 == t2 ->
         fold_affine f a ((Z.add n1 n2,t1)::kts)
     | (k,t)::kts ->
-        fold_affine f (f a k t) kts
+        begin match t.repr , kts with
+          | Kreal z , ( k' , { repr = Kreal z' } ) :: kts' ->
+              let q = Q.add (q_times k z) (q_times k' z') in
+              fold_affine f a ((Z.one,e_real q) :: kts')
+          | _ -> fold_affine f (f a k t) kts
+        end
     | [] -> a
 
   let affine a =
@@ -1153,8 +1214,7 @@ struct
   (* --- Relations --- *)
 
   let is_affine e = match e.repr with
-    | Kint _ | Times _ | Add _ -> true
-    | Kreal z -> Q.equal z Q.zero
+    | Kint _ | Kreal _ | Times _ | Add _ -> true
     | _ -> false
 
   let rec partition_monoms phi c xs ys = function
@@ -1187,11 +1247,17 @@ struct
 
   let multiplication ts = (* ts normalized *)
     let ts = mul_unfold [] ts in
-    let s,ts = ground Z.mul Z.one [] ts in
-    if Z.equal Z.zero s then e_zint Z.zero else
-    if ts=[] then e_zint s else
-      let t = c_mul ts in
-      if Z.equal s Z.one then t else c_times s t
+    if List.exists is_real ts then
+      let r,ts = r_ground Q.mul Q.one [] ts in
+      if Q.equal Q.zero r then e_real Q.zero else
+      if ts=[] then e_real r else
+      if Q.equal r Q.one then c_mul ts else  c_mul (e_real r :: ts)
+    else
+      let s,ts = i_ground Z.mul Z.one [] ts in
+      if Z.equal Z.zero s then e_zint Z.zero else
+      if ts=[] then e_zint s else
+        let t = c_mul ts in
+        if Z.equal s Z.one then t else c_times s t
 
   (* --- Divisions --- *)
 
@@ -1210,6 +1276,12 @@ struct
         then e_times q e
         else c_div a b
     | Kint k , Kint k' when not (Z.equal k' Z.zero) -> e_zint (Z.div k k')
+    | Kreal r , Kint a when not (Z.equal a Z.zero) ->
+        e_real Q.(make r.num (Z.mul a r.den))
+    | Kint a , Kreal b when not (Q.equal b Q.zero) ->
+        e_real Q.(make (Z.mul a b.den) b.num)
+    | Kreal a , Kreal b when not (Q.equal b Q.zero) ->
+        e_real (Q.div a b)
     | _ -> c_div a b
 
   let e_mod a b =
@@ -1435,10 +1507,6 @@ struct
     let n = List.length xs in
     let m = List.length ys in
     if n <> m then e_true else disjunction (List.map2 phi xs ys)
-
-  (* -------------------------------------------------------------------------- *)
-  (* --- Equality on R                                                      --- *)
-  (* -------------------------------------------------------------------------- *)
 
   (* -------------------------------------------------------------------------- *)
   (* --- Equality                                                           --- *)
@@ -1686,6 +1754,18 @@ struct
     | Bind(q,t,e) -> c_bind q t (f e)
 
   (* -------------------------------------------------------------------------- *)
+  (* --- Smart Constructors                                                 --- *)
+  (* -------------------------------------------------------------------------- *)
+
+  let e_equiv = e_eq
+  let e_sum = addition
+  let e_prod = multiplication
+  let e_opp x = times Z.minus_one x
+  let e_add x y = addition [x;y]
+  let e_sub x y = addition [x;e_opp y]
+  let e_mul x y = multiplication [x;y]
+
+  (* -------------------------------------------------------------------------- *)
   (* --- Locally Memoized                                                   --- *)
   (* -------------------------------------------------------------------------- *)
 
@@ -1741,11 +1821,70 @@ struct
   (* --- Binders                                                            --- *)
   (* -------------------------------------------------------------------------- *)
 
+  let let_intro_case q x a =
+    let res = ref None in
+    let is_term_ok a b =
+      let found_term t = assert (!res = None);
+        assert (not (Vars.mem x t.vars));
+        res := Some t; true
+      in
+      match a.repr with
+      | Fvar w -> assert (Var.equal x w); found_term b
+      | Add e ->
+          let is_var t = match t.repr with|Fvar v -> Var.equal x v|_->false in
+          let rec add_case es = match es with
+            | [] -> assert false (* because [x] is in [e] *)
+            | t::ts ->
+                if not (Vars.mem x t.vars) then add_case ts else
+                if not (is_var t) then false (* [x] is too far in [t] *) else
+                if not (List.for_all (fun t -> not (Vars.mem x t.vars)) ts)
+                then false (* [x] is also in [ts] *)
+                else begin (* var [x] is only in [t] that is also exactly [x] *)
+                  let rec fold_until_es acc ys = match ys with
+                    | [] -> assert false
+                    | _ when ys==es -> acc (* first terms until [es] *)
+                    | y::ys -> fold_until_es (y::acc) ys
+                  in
+                  let extracted = List.rev_append (fold_until_es [] e) ts in
+                  let reverse = e_sum (b::(List.map e_opp extracted)) in
+                  found_term reverse
+                end
+          in add_case e
+      | _ -> false
+    in
+    let is_var_ok u v =
+      match (Vars.mem x u.vars), (Vars.mem x v.vars) with
+      | true,false -> is_term_ok u v
+      | false,true -> is_term_ok v u
+      | _,_ -> false
+    in
+    let is_eq e  = match e.repr with|Eq(u,v) -> is_var_ok u v |_ -> false in
+    let is_neq e = match e.repr with|Neq(u,v)-> is_var_ok u v |_ -> false in
+    match q with
+    | Lambda -> None
+    | Forall ->
+        let rec forall_case e = match e.repr with
+          | Or b -> List.exists is_neq b
+          | Imply (hs,b) -> List.exists is_eq hs || is_neq b
+          | Bind(Forall,_,b) -> forall_case b (* skip intermediate forall *)
+          | _ -> is_neq e
+        in ignore(forall_case a); !res
+    | Exists ->
+        let rec exists_case e = match e.repr with
+          | And b -> List.exists is_eq b
+          | Bind(Exists,_,b) -> exists_case b (* skip intermediate exists *)
+          | _ -> is_eq e
+        in ignore(exists_case a); !res
+
   let e_bind q x a =
     assert (lc_closed a) ;
     let do_bind =
       match q with Forall | Exists -> Vars.mem x a.vars | Lambda -> true in
-    if do_bind then c_bind q (tau_of_var x) (lc_bind x a) else a
+    if do_bind then
+      match let_intro_case q x a with
+      | None -> c_bind q (tau_of_var x) (lc_bind x a)
+      | Some e -> lc_subst_var (sigma ()) x e a (* case [let x = e ; a] *)
+    else a
 
   let rec bind_xs q xs e =
     match xs with [] -> e | x::xs -> e_bind q x (bind_xs q xs e)
@@ -1820,18 +1959,6 @@ struct
   let e_subst ?sigma f e =
     let cache = match sigma with None -> ref Tmap.empty | Some c -> c in
     gsubst cache f e
-
-  (* -------------------------------------------------------------------------- *)
-  (* --- Smart Constructors                                                 --- *)
-  (* -------------------------------------------------------------------------- *)
-
-  let e_equiv = e_eq
-  let e_sum = addition
-  let e_prod = multiplication
-  let e_opp x = times Z.minus_one x
-  let e_add x y = addition [x;y]
-  let e_sub x y = addition [x;e_opp y]
-  let e_mul x y = multiplication [x;y]
 
   (* -------------------------------------------------------------------------- *)
   (* --- Iterators                                                          --- *)
