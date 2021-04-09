@@ -1,3 +1,7 @@
+# :warning: Outdated Repository :warning:
+
+The development of Qed is now [integrated](https://git.frama-c.com/pub/frama-c/-/tree/master/src/plugins/qed) with Frama-C.
+
 # First Order Logic with Theories
 
 **Qed** is an [OCaml](http://ocaml.org) library implementing first-order logic with built-in theories.
